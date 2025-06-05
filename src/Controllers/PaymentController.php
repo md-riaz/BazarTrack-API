@@ -51,7 +51,16 @@ class PaymentController {
         $data = json_decode(file_get_contents("php://input"), true);
         if (empty($data['user_id']) || empty($data['amount']) || empty($data['type']) || empty($data['created_at'])) {
             http_response_code(400);
-            echo json_encode(["message" => "user_id, amount, type, and created_at are required."]);
+            echo json_encode(["message" => "user_id, amount, type, and created_at are required."]); 
+            return;
+        }
+        $stmt = $this->db->prepare("SELECT role FROM users WHERE id = ? LIMIT 1");
+        $stmt->bindParam(1, $data['user_id']);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row || $row['role'] !== 'assistant') {
+            http_response_code(403);
+            echo json_encode(["message" => "Only assistants can record payments."]); 
             return;
         }
         $this->payment->user_id = $data['user_id'];

@@ -22,7 +22,7 @@ class AuthController {
             return;
         }
         // For simplicity: validate against users table; password stored in plaintext (not recommended for production)
-        $query = "SELECT id, name, email, password FROM users WHERE email = ? LIMIT 1";
+        $query = "SELECT id, name, email, password, role FROM users WHERE email = ? LIMIT 1";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(1, $data['email']);
         $stmt->execute();
@@ -32,7 +32,7 @@ class AuthController {
                 // Generate a simple token (for example purposes only)
                 $token = bin2hex(random_bytes(16));
                 // Store/associate token in a simple tokens table (not implemented here)
-                echo json_encode(["token" => $token, "user" => ["id" => $row['id'], "name" => $row['name'], "email" => $row['email']]]);
+                echo json_encode(["token" => $token, "user" => ["id" => $row['id'], "name" => $row['name'], "email" => $row['email'], "role" => $row['role']]]);
                 return;
             }
         }

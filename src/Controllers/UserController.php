@@ -27,23 +27,10 @@ class UserController {
                 }
                 break;
             case 'POST':
-                $this->createUser();
-                break;
             case 'PUT':
-                if ($id) {
-                    $this->updateUser($id);
-                } else {
-                    http_response_code(400);
-                    echo json_encode(["message" => "User ID required for PUT."]);
-                }
-                break;
             case 'DELETE':
-                if ($id) {
-                    $this->deleteUser($id);
-                } else {
-                    http_response_code(400);
-                    echo json_encode(["message" => "User ID required for DELETE."]);
-                }
+                http_response_code(405);
+                echo json_encode(["message" => "User management is disabled."]); 
                 break;
             default:
                 http_response_code(405);
@@ -60,6 +47,7 @@ class UserController {
                 'id' => $row['id'],
                 'name' => $row['name'],
                 'email' => $row['email'],
+                'role' => $row['role'],
             ];
         }
         echo json_encode($users_arr);
@@ -74,6 +62,7 @@ class UserController {
                 'id' => $row['id'],
                 'name' => $row['name'],
                 'email' => $row['email'],
+                'role' => $row['role'],
             ]);
         } else {
             http_response_code(404);

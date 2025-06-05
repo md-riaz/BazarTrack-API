@@ -9,6 +9,19 @@ BazarTrack-API provides a JSON REST service for a smart purchase and money manag
 
 Update the connection settings in `src/Core/Database.php` before running the API.
 
+## User setup
+
+An initial owner account must exist in the `users` table before using the API.
+Insert a record manually:
+
+```sql
+INSERT INTO users (name, email, password, role)
+VALUES ('Default Owner', 'owner@example.com', 'password', 'owner');
+```
+
+Additional owners or assistants should be created directly in the database.
+The API exposes no endpoints to register or modify users.
+
 ## Running
 
 Use PHP's built-in server for quick testing:
@@ -26,6 +39,7 @@ All requests are routed through `index.php`.
 - `POST /api/auth/logout` – invalidate the current token.
 - `GET /api/auth/me` – return information about the current user.
 - `POST /api/auth/refresh` – issue a new token.
+- *No registration endpoint is provided.*
 
 ### Orders
 - `GET /api/orders` – list orders.
