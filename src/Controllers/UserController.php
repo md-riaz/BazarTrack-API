@@ -1,0 +1,137 @@
+<?php
+// File: src/Controllers/UserController.php
+
+namespace App\Controllers;
+
+use App\Core\Database;
+use App\Models\User;
+use PDO;
+
+class UserController {
+    private $db;
+    private $user;
+
+    public function __construct() {
+        $database = new Database();
+        $this->db = $database->getConnection();
+        $this->user = new User($this->db);
+    }
+
+    public function processRequest($method, $id = null) {
+        switch ($method) {
+            case 'GET':
+                if ($id) {
+                    $this->getUser($id);
+                } else {
+                    $this->getUsers();
+                }
+                break;
+            case 'POST':
+                $this->createUser();
+                break;
+            case 'PUT':
+                if ($id) {
+                    $this->updateUser($id);
+                } else {
+                    http_response_code(400);
+                    echo json_encode(["message" => "User ID required for PUT."]);
+                }
+                break;
+            case 'DELETE':
+                if ($id) {
+                    $this->deleteUser($id);
+                } else {
+                    http_response_code(400);
+                    echo json_encode(["message" => "User ID required for DELETE."]);
+                }
+                break;
+            default:
+                http_response_code(405);
+                echo json_encode(["message" => "Method not allowed."]);
+                break;
+        }
+    }
+
+    private function getUsers() {
+        $stmt = $this->user->readAll();
+        $users_arr = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $users_arr[] = [
+                'id' => $row['id'],
+                'name' => $row['name'],
+                'email' => $row['email'],
+            ];
+        }
+        echo json_encode($users_arr);
+    }
+
+    private function getUser($id) {
+        $this->user->id = $id;
+        $stmt = $this->user->readOne();
+        if ($stmt->rowCount() === 1) {
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            echo json_encode([
+                'id' => $row['id'],
+                'name' => $row['name'],
+                'email' => $row['email'],
+            ]);
+        } else {
+            http_response_code(404);
+            echo json_encode(["message" => "User not found."]);
+        }
+    }
+
+    private function createUser() {
+        $data = json_decode(file_get_contents("php://input"), true);
+        if (empty($data['name']) || empty($data['email'])) {
+            http_response_code(400);
+            echo json_encode(["message" => "Name and email are required."]);
+            return;
+        }
+        $this->user->name = $data['name'];
+        $this->user->email = $data['email'];
+        if ($this->user->create()) {
+            http_response_code(201);
+            echo json_encode([
+                'id' => $this->user->id,
+                'name' => $this->user->name,
+                'email' => $this->user->email,
+            ]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["message" => "Unable to create user."]);
+        }
+    }
+
+    private function updateUser($id) {
+        $data = json_decode(file_get_contents("php://input"), true);
+        if (empty($data['name']) || empty($data['email'])) {
+            http_response_code(400);
+            echo json_encode(["message" => "Name and email are required."]);
+            return;
+        }
+        $this->user->id = $id;
+        $this->user->name = $data['name'];
+        $this->user->email = $data['email'];
+        if ($this->user->update()) {
+            echo json_encode([
+                'id' => $this->user->id,
+                'name' => $this->user->name,
+                'email' => $this->user->email,
+            ]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["message" => "Unable to update user."]);
+        }
+    }
+
+    private function deleteUser($id) {
+        $this->user->id = $id;
+        if ($this->user->delete()) {
+            echo json_encode(["message" => "User deleted."]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["message" => "Unable to delete user."]);
+        }
+    }
+}
