@@ -19,6 +19,16 @@ php -S localhost:8000 index.php
 
 All requests are routed through `index.php`.
 
+## Example data
+
+The repository provides `example_data.sql` with the full schema and seed rows.
+It creates sample users (including **owner** and **assistant** roles stored in a `role` column),
+orders, wallets and related records. Import it into an empty MySQL database to start quickly:
+
+```bash
+mysql < example_data.sql
+```
+
 ## Endpoints
 
 ### Authentication
