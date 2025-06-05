@@ -31,4 +31,24 @@ class Wallet {
         $stmt->execute();
         return $stmt;
     }
+
+    public function updateBalance(int $userId, float $amount): bool
+    {
+        $query = "UPDATE {$this->table_name} SET balance = balance + :amount WHERE user_id = :user_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':amount', $amount);
+        $stmt->bindParam(':user_id', $userId);
+        return $stmt->execute();
+    }
+
+    public function addTransaction(int $userId, float $amount, string $type, string $createdAt): bool
+    {
+        $query = "INSERT INTO transactions (user_id, amount, type, created_at) VALUES (:user_id, :amount, :type, :created_at)";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':user_id', $userId);
+        $stmt->bindParam(':amount', $amount);
+        $stmt->bindParam(':type', $type);
+        $stmt->bindParam(':created_at', $createdAt);
+        return $stmt->execute();
+    }
 }
