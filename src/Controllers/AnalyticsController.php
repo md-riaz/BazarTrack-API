@@ -15,26 +15,42 @@ class AnalyticsController {
     }
 
     public function dashboard() {
-        // Placeholder: return static stats
+        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM users");
+        $totalUsers = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM orders");
+        $totalOrders = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM payments");
+        $totalPayments = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        $stmt = $this->db->query("SELECT COALESCE(SUM(amount),0) AS total FROM payments");
+        $totalRevenue = (float)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
         echo json_encode([
-            "total_users" => 100,
-            "total_orders" => 250,
-            "total_payments" => 150,
-            "total_revenue" => 50000
+            'total_users' => $totalUsers,
+            'total_orders' => $totalOrders,
+            'total_payments' => $totalPayments,
+            'total_revenue' => $totalRevenue
         ]);
     }
 
     public function reports() {
-        // Placeholder: return static report data
+        $ordersStmt = $this->db->query(
+            "SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, COUNT(*) AS count " .
+            "FROM orders GROUP BY month ORDER BY month"
+        );
+        $ordersByMonth = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $revenueStmt = $this->db->query(
+            "SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, " .
+            "SUM(amount) AS revenue FROM payments GROUP BY month ORDER BY month"
+        );
+        $revenueByMonth = $revenueStmt->fetchAll(PDO::FETCH_ASSOC);
+
         echo json_encode([
-            "orders_by_month" => [
-                ["month" => "2025-01", "count" => 20],
-                ["month" => "2025-02", "count" => 30]
-            ],
-            "revenue_by_month" => [
-                ["month" => "2025-01", "revenue" => 5000],
-                ["month" => "2025-02", "revenue" => 7000]
-            ]
+            'orders_by_month' => $ordersByMonth,
+            'revenue_by_month' => $revenueByMonth
         ]);
     }
 }
