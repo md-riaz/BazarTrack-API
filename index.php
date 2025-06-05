@@ -1,21 +1,7 @@
 <?php
-// File: public/index.php
+// File: index.php
 
-require_once __DIR__ . '/../src/Core/Database.php';
-require_once __DIR__ . '/../src/Models/User.php';
-require_once __DIR__ . '/../src/Models/Order.php';
-require_once __DIR__ . '/../src/Models/OrderItem.php';
-require_once __DIR__ . '/../src/Models/HistoryLog.php';
-require_once __DIR__ . '/../src/Models/Payment.php';
-require_once __DIR__ . '/../src/Models/Wallet.php';
-require_once __DIR__ . '/../src/Controllers/AuthController.php';
-require_once __DIR__ . '/../src/Controllers/UserController.php';
-require_once __DIR__ . '/../src/Controllers/OrderController.php';
-require_once __DIR__ . '/../src/Controllers/OrderItemController.php';
-require_once __DIR__ . '/../src/Controllers/HistoryLogController.php';
-require_once __DIR__ . '/../src/Controllers/PaymentController.php';
-require_once __DIR__ . '/../src/Controllers/WalletController.php';
-require_once __DIR__ . '/../src/Controllers/AnalyticsController.php';
+require __DIR__ . '/autoload.php';
 
 use App\Controllers\AuthController;
 use App\Controllers\UserController;
