@@ -65,13 +65,9 @@ switch ($resource) {
         if ($second === 'orders') {
             $orderController = new OrderController();
             if ($method === 'POST' && $third && $fourth === 'assign') {
-                // POST /api/orders/:id/assign
-                // Placeholder: assign logic not implemented
-                echo json_encode(["message" => "Order assigned."]);
+                $orderController->assignOrder($third);
             } elseif ($method === 'POST' && $third && $fourth === 'complete') {
-                // POST /api/orders/:id/complete
-                // Placeholder: complete logic not implemented
-                echo json_encode(["message" => "Order marked as completed."]);
+                $orderController->completeOrder($third);
             } else {
                 $orderController->processRequest($method, $third);
             }

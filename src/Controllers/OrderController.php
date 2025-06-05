@@ -6,6 +6,7 @@ namespace App\Controllers;
 use App\Core\Database;
 use App\Models\Order;
 use PDO;
+use PDO;
 
 class OrderController {
     private $db;
@@ -15,6 +16,16 @@ class OrderController {
         $database = new Database();
         $this->db = $database->getConnection();
         $this->order = new Order($this->db);
+    }
+
+    private function getUserRole($userId) {
+        $stmt = $this->db->prepare("SELECT role FROM users WHERE id = ? LIMIT 1");
+        $stmt->bindParam(1, $userId);
+        $stmt->execute();
+        if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            return $row['role'];
+        }
+        return null;
     }
 
     public function processRequest($method, $id = null) {
@@ -94,6 +105,11 @@ class OrderController {
             echo json_encode(["message" => "created_by, status, and created_at are required."]);
             return;
         }
+        if ($this->getUserRole($data['created_by']) !== 'owner') {
+            http_response_code(403);
+            echo json_encode(["message" => "Only owners can create orders."]);
+            return;
+        }
         $this->order->created_by = $data['created_by'];
         $this->order->assigned_to = $data['assigned_to'] ?? null;
         $this->order->status = $data['status'];
@@ -146,6 +162,53 @@ class OrderController {
         } else {
             http_response_code(500);
             echo json_encode(["message" => "Unable to delete order."]);
+        }
+    }
+
+    public function assignOrder($id) {
+        $data = json_decode(file_get_contents("php://input"), true);
+        if (empty($data['user_id'])) {
+            http_response_code(400);
+            echo json_encode(["message" => "user_id is required."]);
+            return;
+        }
+        if ($this->getUserRole($data['user_id']) !== 'assistant') {
+            http_response_code(403);
+            echo json_encode(["message" => "Only assistants can assign orders."]);
+            return;
+        }
+        $this->order->id = $id;
+        $this->order->assigned_to = $data['user_id'];
+        $this->order->status = 'assigned';
+        if ($this->order->update()) {
+            echo json_encode(["message" => "Order assigned."]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["message" => "Unable to assign order."]);
+        }
+    }
+
+    public function completeOrder($id) {
+        $data = json_decode(file_get_contents("php://input"), true);
+        if (empty($data['user_id'])) {
+            http_response_code(400);
+            echo json_encode(["message" => "user_id is required."]);
+            return;
+        }
+        if ($this->getUserRole($data['user_id']) !== 'assistant') {
+            http_response_code(403);
+            echo json_encode(["message" => "Only assistants can complete orders."]);
+            return;
+        }
+        $this->order->id = $id;
+        $this->order->assigned_to = $data['user_id'];
+        $this->order->status = 'completed';
+        $this->order->completed_at = $data['completed_at'] ?? null;
+        if ($this->order->update()) {
+            echo json_encode(["message" => "Order marked as completed."]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["message" => "Unable to complete order."]);
         }
     }
 }
