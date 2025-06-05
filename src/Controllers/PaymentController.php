@@ -5,9 +5,13 @@ namespace App\Controllers;
 
 use App\Core\Database;
 use App\Models\Payment;
+use App\Models\Wallet;
+use App\Core\RoleGuard;
+use App\Core\LoggerTrait;
 use PDO;
 
 class PaymentController {
+    use LoggerTrait;
     private $db;
     private $payment;
 
@@ -47,27 +51,42 @@ class PaymentController {
         echo json_encode($payments_arr);
     }
 
-    private function createPayment() {
-        $data = json_decode(file_get_contents("php://input"), true);
-        if (empty($data['user_id']) || empty($data['amount']) || empty($data['type']) || empty($data['created_at'])) {
-            http_response_code(400);
-            echo json_encode(["message" => "user_id, amount, type, and created_at are required."]); 
-            return;
+    private function createPayment()
+    {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $required = ['user_id', 'amount', 'type', 'created_at', 'created_by'];
+        foreach ($required as $field) {
+            if (empty($data[$field])) {
+                http_response_code(400);
+                echo json_encode(["message" => "$field is required."]);
+                return;
+            }
         }
-        $stmt = $this->db->prepare("SELECT role FROM users WHERE id = ? LIMIT 1");
-        $stmt->bindParam(1, $data['user_id']);
-        $stmt->execute();
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$row || $row['role'] !== 'assistant') {
+
+        $guard = new RoleGuard();
+        if ($data['type'] === 'credit' && !$guard->checkRole($data['created_by'], ['owner'])) {
             http_response_code(403);
-            echo json_encode(["message" => "Only assistants can record payments."]); 
+            echo json_encode(["message" => "Only owners can credit wallets."]);
             return;
         }
+        if ($data['type'] === 'debit' && !$guard->checkRole($data['created_by'], ['assistant'])) {
+            http_response_code(403);
+            echo json_encode(["message" => "Only assistants can record expenses."]);
+            return;
+        }
+
+        $wallet = new Wallet($this->db);
+
         $this->payment->user_id = $data['user_id'];
         $this->payment->amount = $data['amount'];
         $this->payment->type = $data['type'];
         $this->payment->created_at = $data['created_at'];
+
         if ($this->payment->create()) {
+            $amount = $data['type'] === 'credit' ? $data['amount'] : -$data['amount'];
+            $wallet->updateBalance($data['user_id'], $amount);
+            $wallet->addTransaction($data['user_id'], $data['amount'], $data['type'], $data['created_at']);
+            $this->logAction('payment', $this->payment->id, 'create', (int)$data['created_by'], $data);
             http_response_code(201);
             echo json_encode([
                 'id' => $this->payment->id,

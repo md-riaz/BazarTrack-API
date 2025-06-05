@@ -5,9 +5,13 @@ namespace App\Controllers;
 
 use App\Core\Database;
 use App\Models\OrderItem;
+use App\Models\Wallet;
+use App\Core\RoleGuard;
+use App\Core\LoggerTrait;
 use PDO;
 
 class OrderItemController {
+    use LoggerTrait;
     private $db;
     private $item;
 
@@ -112,11 +116,22 @@ class OrderItemController {
         }
     }
 
-    private function createItem() {
-        $data = json_decode(file_get_contents("php://input"), true);
-        if (empty($data['order_id']) || empty($data['product_name']) || empty($data['quantity']) || empty($data['status'])) {
-            http_response_code(400);
-            echo json_encode(["message" => "order_id, product_name, quantity, and status are required."]);
+    private function createItem()
+    {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $required = ['order_id', 'product_name', 'quantity', 'status', 'user_id'];
+        foreach ($required as $field) {
+            if (empty($data[$field])) {
+                http_response_code(400);
+                echo json_encode(["message" => "$field is required."]);
+                return;
+            }
+        }
+
+        $guard = new RoleGuard();
+        if (!$guard->checkRole($data['user_id'], ['owner'])) {
+            http_response_code(403);
+            echo json_encode(["message" => "Only owners can add items."]);
             return;
         }
         $this->item->order_id = $data['order_id'];
@@ -127,6 +142,7 @@ class OrderItemController {
         $this->item->actual_cost = $data['actual_cost'] ?? null;
         $this->item->status = $data['status'];
         if ($this->item->create()) {
+            $this->logAction('order_item', $this->item->id, 'create', (int)$data['user_id'], $data);
             http_response_code(201);
             echo json_encode([
                 'id' => $this->item->id,
@@ -144,13 +160,26 @@ class OrderItemController {
         }
     }
 
-    private function updateItem($id) {
-        $data = json_decode(file_get_contents("php://input"), true);
-        if (empty($data['product_name']) || empty($data['quantity']) || empty($data['status'])) {
-            http_response_code(400);
-            echo json_encode(["message" => "product_name, quantity, and status are required."]);
+    private function updateItem($id)
+    {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $required = ['product_name', 'quantity', 'status', 'user_id'];
+        foreach ($required as $field) {
+            if (empty($data[$field])) {
+                http_response_code(400);
+                echo json_encode(["message" => "$field is required."]);
+                return;
+            }
+        }
+
+        $guard = new RoleGuard();
+        if (!$guard->checkRole($data['user_id'], ['assistant', 'owner'])) {
+            http_response_code(403);
+            echo json_encode(["message" => "Permission denied."]);
             return;
         }
+
+        $wallet = new Wallet($this->db);
         $this->item->id = $id;
         $this->item->product_name = $data['product_name'];
         $this->item->quantity = $data['quantity'];
@@ -159,6 +188,11 @@ class OrderItemController {
         $this->item->actual_cost = $data['actual_cost'] ?? null;
         $this->item->status = $data['status'];
         if ($this->item->update()) {
+            if (!empty($data['actual_cost'])) {
+                $wallet->updateBalance($data['user_id'], -$data['actual_cost']);
+                $wallet->addTransaction($data['user_id'], $data['actual_cost'], 'debit', date('Y-m-d H:i:s'));
+            }
+            $this->logAction('order_item', $id, 'update', (int)$data['user_id'], $data);
             echo json_encode([
                 'id' => $this->item->id,
                 'order_id' => $this->item->order_id,
@@ -175,13 +209,27 @@ class OrderItemController {
         }
     }
 
-    private function deleteItem($id) {
+    private function deleteItem($id)
+    {
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (empty($data['user_id'])) {
+            http_response_code(400);
+            echo json_encode(["message" => "user_id is required."]); 
+            return;
+        }
+        $guard = new RoleGuard();
+        if (!$guard->checkRole($data['user_id'], ['owner'])) {
+            http_response_code(403);
+            echo json_encode(["message" => "Only owners can delete items."]); 
+            return;
+        }
         $this->item->id = $id;
         if ($this->item->delete()) {
-            echo json_encode(["message" => "Item deleted."]);
+            $this->logAction('order_item', $id, 'delete', (int)$data['user_id'], $data);
+            echo json_encode(["message" => "Item deleted."]); 
         } else {
             http_response_code(500);
-            echo json_encode(["message" => "Unable to delete item."]);
+            echo json_encode(["message" => "Unable to delete item."]); 
         }
     }
 }

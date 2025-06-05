@@ -6,9 +6,11 @@ namespace App\Controllers;
 use App\Core\Database;
 use App\Models\Order;
 use PDO;
-use PDO;
+use App\Core\RoleGuard;
+use App\Core\LoggerTrait;
 
 class OrderController {
+    use LoggerTrait;
     private $db;
     private $order;
 
@@ -105,7 +107,8 @@ class OrderController {
             echo json_encode(["message" => "created_by, status, and created_at are required."]);
             return;
         }
-        if ($this->getUserRole($data['created_by']) !== 'owner') {
+        $guard = new RoleGuard();
+        if (!$guard->checkRole($data['created_by'], ['owner'])) {
             http_response_code(403);
             echo json_encode(["message" => "Only owners can create orders."]);
             return;
@@ -116,6 +119,7 @@ class OrderController {
         $this->order->created_at = $data['created_at'];
         $this->order->completed_at = $data['completed_at'] ?? null;
         if ($this->order->create()) {
+            $this->logAction('order', $this->order->id, 'create', (int)$data['created_by'], $data);
             http_response_code(201);
             echo json_encode([
                 'id' => $this->order->id,
@@ -165,22 +169,33 @@ class OrderController {
         }
     }
 
-    public function assignOrder($id) {
-        $data = json_decode(file_get_contents("php://input"), true);
-        if (empty($data['user_id'])) {
+    public function assignOrder($id)
+    {
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (empty($data['user_id']) || empty($data['assigned_by'])) {
             http_response_code(400);
-            echo json_encode(["message" => "user_id is required."]);
+            echo json_encode(["message" => "user_id and assigned_by are required."]);
             return;
         }
-        if ($this->getUserRole($data['user_id']) !== 'assistant') {
+
+        $guard = new RoleGuard();
+        $isSelf = (int)$data['user_id'] === (int)$data['assigned_by'];
+        if ($isSelf && !$guard->checkRole($data['assigned_by'], ['assistant'])) {
             http_response_code(403);
-            echo json_encode(["message" => "Only assistants can assign orders."]);
+            echo json_encode(["message" => "Only assistants can self-assign."]);
             return;
         }
+        if (!$isSelf && !$guard->checkRole($data['assigned_by'], ['owner'])) {
+            http_response_code(403);
+            echo json_encode(["message" => "Only owners can assign others."]);
+            return;
+        }
+
         $this->order->id = $id;
         $this->order->assigned_to = $data['user_id'];
         $this->order->status = 'assigned';
         if ($this->order->update()) {
+            $this->logAction('order', $id, 'assign', (int)$data['assigned_by'], $data);
             echo json_encode(["message" => "Order assigned."]);
         } else {
             http_response_code(500);
@@ -188,14 +203,16 @@ class OrderController {
         }
     }
 
-    public function completeOrder($id) {
-        $data = json_decode(file_get_contents("php://input"), true);
+    public function completeOrder($id)
+    {
+        $data = json_decode(file_get_contents('php://input'), true);
         if (empty($data['user_id'])) {
             http_response_code(400);
             echo json_encode(["message" => "user_id is required."]);
             return;
         }
-        if ($this->getUserRole($data['user_id']) !== 'assistant') {
+        $guard = new RoleGuard();
+        if (!$guard->checkRole($data['user_id'], ['assistant'])) {
             http_response_code(403);
             echo json_encode(["message" => "Only assistants can complete orders."]);
             return;
@@ -205,6 +222,7 @@ class OrderController {
         $this->order->status = 'completed';
         $this->order->completed_at = $data['completed_at'] ?? null;
         if ($this->order->update()) {
+            $this->logAction('order', $id, 'complete', (int)$data['user_id'], $data);
             echo json_encode(["message" => "Order marked as completed."]);
         } else {
             http_response_code(500);
