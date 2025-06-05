@@ -21,14 +21,14 @@ class AuthController {
             echo json_encode(["message" => "Email and password are required."]);
             return;
         }
-        // For simplicity: validate against users table; password stored in plaintext (not recommended for production)
+        // Validate against users table; passwords are stored using password_hash
         $query = "SELECT id, name, email, password, role FROM users WHERE email = ? LIMIT 1";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(1, $data['email']);
         $stmt->execute();
         if ($stmt->rowCount() === 1) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($row['password'] === $data['password']) {
+            if (password_verify($data['password'], $row['password'])) {
                 // Generate a simple token (for example purposes only)
                 $token = bin2hex(random_bytes(16));
                 // Store/associate token in a simple tokens table (not implemented here)

@@ -17,8 +17,21 @@ contains the full schema and a few sample records:
 
 ```sql
 INSERT INTO users (name, email, password, role)
-VALUES ('Grace Morrison', 'owner@example.com', 'password', 'owner');
+VALUES (
+    'Grace Morrison',
+    'owner@example.com',
+    '$2y$10$bJCOemcxy.RQWdS9evmCeeH9yryaa4sraTvcWoHPjj0xxKSi7htW6',
+    'owner'
+);
 ```
+
+The password values in `seed.sql` are produced using `password_hash()`.
+Sample credentials you can use for testing:
+- `owner@example.com` / `password`
+- `grace.morrison@example.com` / `password1`
+- `leo.martinez@example.com` / `password2`
+
+Use these when calling `POST /api/auth/login`.
 
 Additional owners or assistants should be created directly in the database.
 The API exposes no endpoints to register or modify users.
