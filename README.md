@@ -12,11 +12,12 @@ Update the connection settings in `src/Core/Database.php` before running the API
 ## User setup
 
 An initial owner account must exist in the `users` table before using the API.
-Insert a record manually:
+You can create it manually or import the provided `seed.sql` script which
+contains the full schema and a few sample records:
 
 ```sql
 INSERT INTO users (name, email, password, role)
-VALUES ('Default Owner', 'owner@example.com', 'password', 'owner');
+VALUES ('Grace Morrison', 'owner@example.com', 'password', 'owner');
 ```
 
 Additional owners or assistants should be created directly in the database.
@@ -34,12 +35,13 @@ All requests are routed through `index.php`.
 
 ## Example data
 
-The repository provides `example_data.sql` with the full schema and seed rows.
-It creates sample users (including **owner** and **assistant** roles stored in a `role` column),
-orders, wallets and related records. Import it into an empty MySQL database to start quickly:
+The repository provides `seed.sql` with the full schema and seed rows. It
+creates sample users (including **owner** and **assistant** roles stored in a
+`role` column), orders, wallets and related records. Import it into an empty
+MySQL database to start quickly:
 
 ```bash
-mysql < example_data.sql
+mysql < seed.sql
 ```
 
 ## Endpoints
