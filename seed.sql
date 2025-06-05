@@ -74,9 +74,9 @@ CREATE TABLE IF NOT EXISTS history_logs (
 
 -- Seed users
 INSERT INTO users (id, name, email, password, role) VALUES
-    (1, 'Default Owner', 'owner@example.com', 'password', 'owner'),
-    (2, 'Grace Morrison', 'grace.morrison@example.com', 'password1', 'owner'),
-    (3, 'Leo Martinez', 'leo.martinez@example.com', 'password2', 'assistant');
+    (1, 'Default Owner', 'owner@example.com', '$2y$10$bJCOemcxy.RQWdS9evmCeeH9yryaa4sraTvcWoHPjj0xxKSi7htW6', 'owner'),
+    (2, 'Grace Morrison', 'grace.morrison@example.com', '$2y$10$r1cVdgtEhOvUkQqj5pmuoe8eCQxKDfWc.gcKXwxuV3QcUmzntVR5G', 'owner'),
+    (3, 'Leo Martinez', 'leo.martinez@example.com', '$2y$10$xYI66DYuT65qtu/scWa5.u1IYQpckUs3z3.PHnfIUbsR9X740XAxq', 'assistant');
 
 -- Seed wallets
 INSERT INTO wallets (user_id, balance) VALUES
