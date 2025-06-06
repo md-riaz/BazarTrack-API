@@ -7,13 +7,16 @@ BazarTrack-API provides a JSON REST service for a smart purchase and money manag
 - PHP 8.0+
 - MySQL
 
-Create a `.env` file (or set environment variables) with your database details before running the API. The `config.php` file automatically loads variables from this file at runtime.
+Copy `.env.example` to `.env` and update the values before running the API.
+It defines variables like `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS` and `ALLOWED_ORIGIN`.
+
+The `config.php` file automatically loads variables from this file at runtime.
 The following variables are required:
 
 - `DB_HOST` – database host name
 - `DB_NAME` – database name
 - `DB_USER` – database username
-- `DB_PASSWORD` – database password
+- `DB_PASSWORD` – database password 
 
 ## User setup
 
