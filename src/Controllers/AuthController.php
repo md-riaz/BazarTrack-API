@@ -4,6 +4,7 @@
 namespace App\Controllers;
 
 use App\Core\Database;
+use App\Models\Token;
 use PDO;
 
 class AuthController {
@@ -29,10 +30,21 @@ class AuthController {
         if ($stmt->rowCount() === 1) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             if (password_verify($data['password'], $row['password'])) {
-                // Generate a simple token (for example purposes only)
-                $token = bin2hex(random_bytes(16));
-                // Store/associate token in a simple tokens table (not implemented here)
-                echo json_encode(["token" => $token, "user" => ["id" => $row['id'], "name" => $row['name'], "email" => $row['email'], "role" => $row['role']]]);
+                $tokenValue = bin2hex(random_bytes(16));
+                $token = new Token($this->db);
+                $token->user_id = $row['id'];
+                $token->token = $tokenValue;
+                $token->created_at = date('Y-m-d H:i:s');
+                $token->create();
+                echo json_encode([
+                    'token' => $tokenValue,
+                    'user' => [
+                        'id' => $row['id'],
+                        'name' => $row['name'],
+                        'email' => $row['email'],
+                        'role' => $row['role']
+                    ]
+                ]);
                 return;
             }
         }
@@ -41,26 +53,61 @@ class AuthController {
     }
 
     public function logout() {
-        // Invalidate the token (not implemented: would remove from tokens table)
-        echo json_encode(["message" => "Logged out successfully."]);
+        if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
+            http_response_code(401);
+            echo json_encode(['message' => 'Unauthorized']);
+            return;
+        }
+        $header = $_SERVER['HTTP_AUTHORIZATION'];
+        $tokenValue = str_replace('Bearer ', '', $header);
+        $token = new Token($this->db);
+        $token->revoke($tokenValue);
+        echo json_encode(['message' => 'Logged out successfully.']);
     }
 
     public function me() {
-        // Retrieve token from headers and return user info (not fully implemented)
         if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
             http_response_code(401);
-            echo json_encode(["message" => "No token provided."]);
+            echo json_encode(['message' => 'Unauthorized']);
             return;
         }
-        $token = str_replace("Bearer ", "", $_SERVER['HTTP_AUTHORIZATION']);
-        // Lookup token in tokens table and return user info; placeholder response:
-        echo json_encode(["user" => ["id" => 1, "name" => "Example User", "email" => "user@example.com"]]);
+        $tokenValue = str_replace('Bearer ', '', $_SERVER['HTTP_AUTHORIZATION']);
+        $token = new Token($this->db);
+        $userId = $token->findUserId($tokenValue);
+        if (!$userId) {
+            http_response_code(401);
+            echo json_encode(['message' => 'Unauthorized']);
+            return;
+        }
+        $stmt = $this->db->prepare('SELECT id, name, email, role FROM users WHERE id = ? LIMIT 1');
+        $stmt->bindParam(1, $userId);
+        $stmt->execute();
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        echo json_encode(['user' => $user]);
     }
 
     public function refresh() {
-        // In real scenario, verify old token and issue new one.
-        // Placeholder: return new token
-        $newToken = bin2hex(random_bytes(16));
-        echo json_encode(["token" => $newToken]);
+        if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
+            http_response_code(401);
+            echo json_encode(['message' => 'Unauthorized']);
+            return;
+        }
+        $oldTokenValue = str_replace('Bearer ', '', $_SERVER['HTTP_AUTHORIZATION']);
+        $token = new Token($this->db);
+        $userId = $token->findUserId($oldTokenValue);
+        if (!$userId) {
+            http_response_code(401);
+            echo json_encode(['message' => 'Unauthorized']);
+            return;
+        }
+        $token->revoke($oldTokenValue);
+
+        $newValue = bin2hex(random_bytes(16));
+        $token->user_id = $userId;
+        $token->token = $newValue;
+        $token->created_at = date('Y-m-d H:i:s');
+        $token->create();
+
+        echo json_encode(['token' => $newValue]);
     }
 }

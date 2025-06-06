@@ -8,6 +8,7 @@ use App\Models\Order;
 use PDO;
 use App\Core\RoleGuard;
 use App\Core\LoggerTrait;
+use App\Core\AuthMiddleware;
 
 class OrderController {
     use LoggerTrait;
@@ -31,6 +32,9 @@ class OrderController {
     }
 
     public function processRequest($method, $id = null) {
+        if (!AuthMiddleware::check()) {
+            return;
+        }
         switch ($method) {
             case 'GET':
                 if ($id) {
@@ -171,6 +175,9 @@ class OrderController {
 
     public function assignOrder($id)
     {
+        if (!AuthMiddleware::check()) {
+            return;
+        }
         $data = json_decode(file_get_contents('php://input'), true);
         if (empty($data['user_id']) || empty($data['assigned_by'])) {
             http_response_code(400);
@@ -205,6 +212,9 @@ class OrderController {
 
     public function completeOrder($id)
     {
+        if (!AuthMiddleware::check()) {
+            return;
+        }
         $data = json_decode(file_get_contents('php://input'), true);
         if (empty($data['user_id'])) {
             http_response_code(400);

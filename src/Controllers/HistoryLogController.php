@@ -6,6 +6,7 @@ namespace App\Controllers;
 use App\Core\Database;
 use App\Models\HistoryLog;
 use PDO;
+use App\Core\AuthMiddleware;
 
 class HistoryLogController {
     private $db;
@@ -18,6 +19,9 @@ class HistoryLogController {
     }
 
     public function processRequest($method, $id = null, $entityType = null, $entityId = null) {
+        if (!AuthMiddleware::check()) {
+            return;
+        }
         switch ($method) {
             case 'GET':
                 if ($entityType && $entityId) {

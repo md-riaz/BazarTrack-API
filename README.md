@@ -10,6 +10,14 @@ BazarTrack-API provides a JSON REST service for a smart purchase and money manag
 Copy `.env.example` to `.env` and update the values before running the API.
 It defines variables like `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS` and `ALLOWED_ORIGIN`.
 
+The `config.php` file automatically loads variables from this file at runtime.
+The following variables are required:
+
+- `DB_HOST` – database host name
+- `DB_NAME` – database name
+- `DB_USER` – database username
+- `DB_PASSWORD` – database password 
+
 ## User setup
 
 An initial owner account must exist in the `users` table before using the API.
@@ -46,6 +54,12 @@ php -S localhost:8000 index.php
 ```
 
 All requests are routed through `index.php`.
+
+### CORS configuration
+
+Set an environment variable called `CORS_ORIGIN` with the URL allowed to access
+the API. When defined, `index.php` will include an `Access-Control-Allow-Origin`
+header for that origin.
 
 ## Example data
 

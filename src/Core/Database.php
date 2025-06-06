@@ -7,11 +7,22 @@ use PDO;
 use PDOException;
 
 class Database {
-    private $host = 'localhost';
-    private $db_name = 'test_db';
-    private $username = 'root';
-    private $password = '';
+    private $host;
+    private $db_name;
+    private $username;
+    private $password;
     private $conn;
+
+    public function __construct()
+    {
+        // Load configuration so environment variables from .env are available
+        require_once __DIR__ . '/../../config.php';
+
+        $this->host = getenv('DB_HOST') ?: 'localhost';
+        $this->db_name = getenv('DB_NAME') ?: 'test_db';
+        $this->username = getenv('DB_USER') ?: 'root';
+        $this->password = getenv('DB_PASSWORD') ?: '';
+    }
 
     public function getConnection() {
         $this->conn = null;
