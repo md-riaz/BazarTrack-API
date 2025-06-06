@@ -29,10 +29,23 @@ class AuthController {
         if ($stmt->rowCount() === 1) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             if (password_verify($data['password'], $row['password'])) {
-                // Generate a simple token (for example purposes only)
-                $token = bin2hex(random_bytes(16));
-                // Store/associate token in a simple tokens table (not implemented here)
-                echo json_encode(["token" => $token, "user" => ["id" => $row['id'], "name" => $row['name'], "email" => $row['email'], "role" => $row['role']]]);
+                $token  = bin2hex(random_bytes(16));
+                $expiry = date('Y-m-d H:i:s', time() + 3600);
+                $insert = $this->db->prepare('INSERT INTO tokens (user_id, token, expires_at) VALUES (?, ?, ?)');
+                $insert->bindParam(1, $row['id'], PDO::PARAM_INT);
+                $insert->bindParam(2, $token);
+                $insert->bindParam(3, $expiry);
+                $insert->execute();
+
+                echo json_encode([
+                    'token' => $token,
+                    'user'  => [
+                        'id'    => $row['id'],
+                        'name'  => $row['name'],
+                        'email' => $row['email'],
+                        'role'  => $row['role'],
+                    ],
+                ]);
                 return;
             }
         }
@@ -41,26 +54,84 @@ class AuthController {
     }
 
     public function logout() {
-        // Invalidate the token (not implemented: would remove from tokens table)
-        echo json_encode(["message" => "Logged out successfully."]);
+        if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
+            http_response_code(401);
+            echo json_encode(['message' => 'No token provided.']);
+            return;
+        }
+
+        $token = str_replace('Bearer ', '', $_SERVER['HTTP_AUTHORIZATION']);
+        $stmt  = $this->db->prepare('DELETE FROM tokens WHERE token = ?');
+        $stmt->bindParam(1, $token);
+        $stmt->execute();
+
+        echo json_encode(['message' => 'Logged out successfully.']);
     }
 
     public function me() {
-        // Retrieve token from headers and return user info (not fully implemented)
         if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
             http_response_code(401);
-            echo json_encode(["message" => "No token provided."]);
+            echo json_encode(['message' => 'No token provided.']);
             return;
         }
-        $token = str_replace("Bearer ", "", $_SERVER['HTTP_AUTHORIZATION']);
-        // Lookup token in tokens table and return user info; placeholder response:
-        echo json_encode(["user" => ["id" => 1, "name" => "Example User", "email" => "user@example.com"]]);
+
+        $token = str_replace('Bearer ', '', $_SERVER['HTTP_AUTHORIZATION']);
+        $query = 'SELECT u.id, u.name, u.email, u.role, t.expires_at, t.id as token_id
+                  FROM tokens t JOIN users u ON t.user_id = u.id
+                  WHERE t.token = ? LIMIT 1';
+        $stmt  = $this->db->prepare($query);
+        $stmt->bindParam(1, $token);
+        $stmt->execute();
+        if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (strtotime($row['expires_at']) > time()) {
+                echo json_encode([
+                    'id'    => $row['id'],
+                    'name'  => $row['name'],
+                    'email' => $row['email'],
+                    'role'  => $row['role'],
+                ]);
+                return;
+            }
+
+            $delete = $this->db->prepare('DELETE FROM tokens WHERE id = ?');
+            $delete->bindParam(1, $row['token_id']);
+            $delete->execute();
+        }
+
+        http_response_code(401);
+        echo json_encode(['message' => 'Invalid or expired token.']);
     }
 
     public function refresh() {
-        // In real scenario, verify old token and issue new one.
-        // Placeholder: return new token
-        $newToken = bin2hex(random_bytes(16));
-        echo json_encode(["token" => $newToken]);
+        if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
+            http_response_code(401);
+            echo json_encode(['message' => 'No token provided.']);
+            return;
+        }
+
+        $token = str_replace('Bearer ', '', $_SERVER['HTTP_AUTHORIZATION']);
+        $stmt  = $this->db->prepare('SELECT id, user_id, expires_at FROM tokens WHERE token = ? LIMIT 1');
+        $stmt->bindParam(1, $token);
+        $stmt->execute();
+        if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (strtotime($row['expires_at']) > time()) {
+                $newToken  = bin2hex(random_bytes(16));
+                $newExpiry = date('Y-m-d H:i:s', time() + 3600);
+                $update    = $this->db->prepare('UPDATE tokens SET token = ?, expires_at = ? WHERE id = ?');
+                $update->bindParam(1, $newToken);
+                $update->bindParam(2, $newExpiry);
+                $update->bindParam(3, $row['id']);
+                $update->execute();
+                echo json_encode(['token' => $newToken]);
+                return;
+            }
+
+            $delete = $this->db->prepare('DELETE FROM tokens WHERE id = ?');
+            $delete->bindParam(1, $row['id']);
+            $delete->execute();
+        }
+
+        http_response_code(401);
+        echo json_encode(['message' => 'Invalid or expired token.']);
     }
 }
