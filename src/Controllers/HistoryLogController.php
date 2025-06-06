@@ -117,6 +117,10 @@ class HistoryLogController {
     }
 
     private function deleteLog($id) {
+        if (!Validator::validateInt($id)) {
+            ResponseHelper::error(400, 'Invalid log ID.');
+            return;
+        }
         $this->log->id = $id;
         if ($this->log->delete()) {
             echo json_encode(["message" => "Log deleted."]);

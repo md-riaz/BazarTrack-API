@@ -6,6 +6,7 @@ namespace App\Controllers;
 use App\Core\Database;
 use App\Models\User;
 use App\Core\ResponseHelper;
+use App\Core\Validator;
 use PDO;
 
 class UserController {
@@ -53,6 +54,10 @@ class UserController {
     }
 
     private function getUser($id) {
+        if (!Validator::validateInt($id)) {
+            ResponseHelper::error(400, 'Invalid user ID.');
+            return;
+        }
         $this->user->id = $id;
         $stmt = $this->user->readOne();
         if ($stmt->rowCount() === 1) {

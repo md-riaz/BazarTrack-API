@@ -76,6 +76,10 @@ class OrderItemController {
     }
 
     private function getItemsByOrder($orderId) {
+        if (!Validator::validateInt($orderId)) {
+            ResponseHelper::error(400, 'Invalid order ID.');
+            return;
+        }
         $this->item->order_id = $orderId;
         $stmt = $this->item->readByOrder();
         $items_arr = [];
@@ -95,6 +99,10 @@ class OrderItemController {
     }
 
     private function getItem($id) {
+        if (!Validator::validateInt($id)) {
+            ResponseHelper::error(400, 'Invalid item ID.');
+            return;
+        }
         $this->item->id = $id;
         $stmt = $this->item->readOne();
         if ($stmt->rowCount() === 1) {
@@ -168,6 +176,10 @@ class OrderItemController {
 
     private function updateItem($id)
     {
+        if (!Validator::validateInt($id)) {
+            ResponseHelper::error(400, 'Invalid item ID.');
+            return;
+        }
         $data = json_decode(file_get_contents('php://input'), true);
         $required = ['product_name', 'quantity', 'status', 'user_id'];
         foreach ($required as $field) {
@@ -225,6 +237,10 @@ class OrderItemController {
 
     private function deleteItem($id)
     {
+        if (!Validator::validateInt($id)) {
+            ResponseHelper::error(400, 'Invalid item ID.');
+            return;
+        }
         $data = json_decode(file_get_contents('php://input'), true);
         if (empty($data['user_id'])) {
             ResponseHelper::error(400, 'user_id is required.');

@@ -81,6 +81,10 @@ class OrderController {
     }
 
     private function getOrder($id) {
+        if (!Validator::validateInt($id)) {
+            ResponseHelper::error(400, 'Invalid order ID.');
+            return;
+        }
         $this->order->id = $id;
         $stmt = $this->order->readOne();
         if ($stmt->rowCount() === 1) {
@@ -139,6 +143,10 @@ class OrderController {
     }
 
     private function updateOrder($id) {
+        if (!Validator::validateInt($id)) {
+            ResponseHelper::error(400, 'Invalid order ID.');
+            return;
+        }
         $data = json_decode(file_get_contents("php://input"), true);
         if (empty($data['status'])) {
             ResponseHelper::error(400, 'status is required.');
@@ -168,6 +176,10 @@ class OrderController {
     }
 
     private function deleteOrder($id) {
+        if (!Validator::validateInt($id)) {
+            ResponseHelper::error(400, 'Invalid order ID.');
+            return;
+        }
         $this->order->id = $id;
         if ($this->order->delete()) {
             echo json_encode(["message" => "Order deleted."]);
@@ -178,6 +190,10 @@ class OrderController {
 
     public function assignOrder($id)
     {
+        if (!Validator::validateInt($id)) {
+            ResponseHelper::error(400, 'Invalid order ID.');
+            return;
+        }
         $data = json_decode(file_get_contents('php://input'), true);
         if (empty($data['user_id']) || empty($data['assigned_by'])) {
             ResponseHelper::error(400, 'user_id and assigned_by are required.');
@@ -213,6 +229,10 @@ class OrderController {
 
     public function completeOrder($id)
     {
+        if (!Validator::validateInt($id)) {
+            ResponseHelper::error(400, 'Invalid order ID.');
+            return;
+        }
         $data = json_decode(file_get_contents('php://input'), true);
         if (empty($data['user_id'])) {
             ResponseHelper::error(400, 'user_id is required.');

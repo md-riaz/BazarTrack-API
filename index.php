@@ -11,6 +11,7 @@ use App\Controllers\HistoryLogController;
 use App\Controllers\PaymentController;
 use App\Controllers\WalletController;
 use App\Controllers\AnalyticsController;
+use App\Core\ResponseHelper;
 
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
@@ -36,27 +37,35 @@ switch ($resource) {
             $auth = new AuthController();
             switch ($third) {
                 case 'login':
-                    if ($method === 'POST') $auth->login();
-                    else {
-                        http_response_code(405);
-                        echo json_encode(["message" => "Method not allowed."]);
+                    if ($method === 'POST') {
+                        $auth->login();
+                    } else {
+                        ResponseHelper::error(405, 'Method not allowed.');
                     }
                     break;
                 case 'logout':
-                    if ($method === 'POST') $auth->logout();
-                    else { http_response_code(405); echo json_encode(["message" => "Method not allowed."]); }
+                    if ($method === 'POST') {
+                        $auth->logout();
+                    } else {
+                        ResponseHelper::error(405, 'Method not allowed.');
+                    }
                     break;
                 case 'me':
-                    if ($method === 'GET') $auth->me();
-                    else { http_response_code(405); echo json_encode(["message" => "Method not allowed."]); }
+                    if ($method === 'GET') {
+                        $auth->me();
+                    } else {
+                        ResponseHelper::error(405, 'Method not allowed.');
+                    }
                     break;
                 case 'refresh':
-                    if ($method === 'POST') $auth->refresh();
-                    else { http_response_code(405); echo json_encode(["message" => "Method not allowed."]); }
+                    if ($method === 'POST') {
+                        $auth->refresh();
+                    } else {
+                        ResponseHelper::error(405, 'Method not allowed.');
+                    }
                     break;
                 default:
-                    http_response_code(404);
-                    echo json_encode(["message" => "Endpoint not found."]);
+                    ResponseHelper::error(404, 'Endpoint not found.');
                     break;
             }
             break;
@@ -130,17 +139,14 @@ switch ($resource) {
             } elseif ($third === 'reports' && $method === 'GET') {
                 $analyticsController->reports();
             } else {
-                http_response_code(404);
-                echo json_encode(["message" => "Endpoint not found."]);
+                ResponseHelper::error(404, 'Endpoint not found.');
             }
             break;
         }
         // Fallback
-        http_response_code(404);
-        echo json_encode(["message" => "Endpoint not found."]);
+        ResponseHelper::error(404, 'Endpoint not found.');
         break;
     default:
-        http_response_code(404);
-        echo json_encode(["message" => "Endpoint not found."]);
+        ResponseHelper::error(404, 'Endpoint not found.');
         break;
 }
