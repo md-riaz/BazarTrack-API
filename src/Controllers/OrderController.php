@@ -8,6 +8,8 @@ use App\Models\Order;
 use PDO;
 use App\Core\RoleGuard;
 use App\Core\LoggerTrait;
+use App\Core\ResponseHelper;
+use App\Core\Validator;
 
 class OrderController {
     use LoggerTrait;
@@ -46,21 +48,18 @@ class OrderController {
                 if ($id) {
                     $this->updateOrder($id);
                 } else {
-                    http_response_code(400);
-                    echo json_encode(["message" => "Order ID required for PUT."]);
+                    ResponseHelper::error(400, 'Order ID required for PUT.');
                 }
                 break;
             case 'DELETE':
                 if ($id) {
                     $this->deleteOrder($id);
                 } else {
-                    http_response_code(400);
-                    echo json_encode(["message" => "Order ID required for DELETE."]);
+                    ResponseHelper::error(400, 'Order ID required for DELETE.');
                 }
                 break;
             default:
-                http_response_code(405);
-                echo json_encode(["message" => "Method not allowed."]);
+                ResponseHelper::error(405, 'Method not allowed.');
                 break;
         }
     }
@@ -95,22 +94,27 @@ class OrderController {
                 'completed_at' => $row['completed_at'],
             ]);
         } else {
-            http_response_code(404);
-            echo json_encode(["message" => "Order not found."]);
+            ResponseHelper::error(404, 'Order not found.');
         }
     }
 
     private function createOrder() {
         $data = json_decode(file_get_contents("php://input"), true);
         if (empty($data['created_by']) || empty($data['status']) || empty($data['created_at'])) {
-            http_response_code(400);
-            echo json_encode(["message" => "created_by, status, and created_at are required."]);
+            ResponseHelper::error(400, 'created_by, status, and created_at are required.');
+            return;
+        }
+
+        if (!Validator::validateInt($data['created_by']) ||
+            (isset($data['assigned_to']) && $data['assigned_to'] !== null && !Validator::validateInt($data['assigned_to'])) ||
+            !Validator::validateDate($data['created_at']) ||
+            (isset($data['completed_at']) && $data['completed_at'] !== null && !Validator::validateDate($data['completed_at']))) {
+            ResponseHelper::error(400, 'Invalid input format.');
             return;
         }
         $guard = new RoleGuard();
         if (!$guard->checkRole($data['created_by'], ['owner'])) {
-            http_response_code(403);
-            echo json_encode(["message" => "Only owners can create orders."]);
+            ResponseHelper::error(403, 'Only owners can create orders.');
             return;
         }
         $this->order->created_by = $data['created_by'];
@@ -130,18 +134,23 @@ class OrderController {
                 'completed_at' => $this->order->completed_at,
             ]);
         } else {
-            http_response_code(500);
-            echo json_encode(["message" => "Unable to create order."]);
+            ResponseHelper::error(500, 'Unable to create order.');
         }
     }
 
     private function updateOrder($id) {
         $data = json_decode(file_get_contents("php://input"), true);
         if (empty($data['status'])) {
-            http_response_code(400);
-            echo json_encode(["message" => "status is required."]);
+            ResponseHelper::error(400, 'status is required.');
             return;
         }
+
+        if ((isset($data['assigned_to']) && $data['assigned_to'] !== null && !Validator::validateInt($data['assigned_to'])) ||
+            (isset($data['completed_at']) && $data['completed_at'] !== null && !Validator::validateDate($data['completed_at']))) {
+            ResponseHelper::error(400, 'Invalid input format.');
+            return;
+        }
+
         $this->order->id = $id;
         $this->order->assigned_to = $data['assigned_to'] ?? null;
         $this->order->status = $data['status'];
@@ -154,8 +163,7 @@ class OrderController {
                 'completed_at' => $this->order->completed_at,
             ]);
         } else {
-            http_response_code(500);
-            echo json_encode(["message" => "Unable to update order."]);
+            ResponseHelper::error(500, 'Unable to update order.');
         }
     }
 
@@ -164,8 +172,7 @@ class OrderController {
         if ($this->order->delete()) {
             echo json_encode(["message" => "Order deleted."]);
         } else {
-            http_response_code(500);
-            echo json_encode(["message" => "Unable to delete order."]);
+            ResponseHelper::error(500, 'Unable to delete order.');
         }
     }
 
@@ -173,21 +180,23 @@ class OrderController {
     {
         $data = json_decode(file_get_contents('php://input'), true);
         if (empty($data['user_id']) || empty($data['assigned_by'])) {
-            http_response_code(400);
-            echo json_encode(["message" => "user_id and assigned_by are required."]);
+            ResponseHelper::error(400, 'user_id and assigned_by are required.');
+            return;
+        }
+
+        if (!Validator::validateInt($data['user_id']) || !Validator::validateInt($data['assigned_by'])) {
+            ResponseHelper::error(400, 'Invalid user_id or assigned_by.');
             return;
         }
 
         $guard = new RoleGuard();
         $isSelf = (int)$data['user_id'] === (int)$data['assigned_by'];
         if ($isSelf && !$guard->checkRole($data['assigned_by'], ['assistant'])) {
-            http_response_code(403);
-            echo json_encode(["message" => "Only assistants can self-assign."]);
+            ResponseHelper::error(403, 'Only assistants can self-assign.');
             return;
         }
         if (!$isSelf && !$guard->checkRole($data['assigned_by'], ['owner'])) {
-            http_response_code(403);
-            echo json_encode(["message" => "Only owners can assign others."]);
+            ResponseHelper::error(403, 'Only owners can assign others.');
             return;
         }
 
@@ -198,8 +207,7 @@ class OrderController {
             $this->logAction('order', $id, 'assign', (int)$data['assigned_by'], $data);
             echo json_encode(["message" => "Order assigned."]);
         } else {
-            http_response_code(500);
-            echo json_encode(["message" => "Unable to assign order."]);
+            ResponseHelper::error(500, 'Unable to assign order.');
         }
     }
 
@@ -207,14 +215,18 @@ class OrderController {
     {
         $data = json_decode(file_get_contents('php://input'), true);
         if (empty($data['user_id'])) {
-            http_response_code(400);
-            echo json_encode(["message" => "user_id is required."]);
+            ResponseHelper::error(400, 'user_id is required.');
+            return;
+        }
+
+        if (!Validator::validateInt($data['user_id']) ||
+            (isset($data['completed_at']) && $data['completed_at'] !== null && !Validator::validateDate($data['completed_at']))) {
+            ResponseHelper::error(400, 'Invalid input format.');
             return;
         }
         $guard = new RoleGuard();
         if (!$guard->checkRole($data['user_id'], ['assistant'])) {
-            http_response_code(403);
-            echo json_encode(["message" => "Only assistants can complete orders."]);
+            ResponseHelper::error(403, 'Only assistants can complete orders.');
             return;
         }
         $this->order->id = $id;
@@ -223,10 +235,9 @@ class OrderController {
         $this->order->completed_at = $data['completed_at'] ?? null;
         if ($this->order->update()) {
             $this->logAction('order', $id, 'complete', (int)$data['user_id'], $data);
-            echo json_encode(["message" => "Order marked as completed."]);
+            echo json_encode(["message" => "Order marked as completed."]); 
         } else {
-            http_response_code(500);
-            echo json_encode(["message" => "Unable to complete order."]);
+            ResponseHelper::error(500, 'Unable to complete order.');
         }
     }
 }

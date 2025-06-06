@@ -5,6 +5,7 @@ namespace App\Controllers;
 
 use App\Core\Database;
 use App\Models\User;
+use App\Core\ResponseHelper;
 use PDO;
 
 class UserController {
@@ -29,12 +30,10 @@ class UserController {
             case 'POST':
             case 'PUT':
             case 'DELETE':
-                http_response_code(405);
-                echo json_encode(["message" => "User management is disabled."]); 
+                ResponseHelper::error(405, 'User management is disabled.');
                 break;
             default:
-                http_response_code(405);
-                echo json_encode(["message" => "Method not allowed."]);
+                ResponseHelper::error(405, 'Method not allowed.');
                 break;
         }
     }
@@ -65,16 +64,14 @@ class UserController {
                 'role' => $row['role'],
             ]);
         } else {
-            http_response_code(404);
-            echo json_encode(["message" => "User not found."]);
+            ResponseHelper::error(404, 'User not found.');
         }
     }
 
     private function createUser() {
         $data = json_decode(file_get_contents("php://input"), true);
         if (empty($data['name']) || empty($data['email'])) {
-            http_response_code(400);
-            echo json_encode(["message" => "Name and email are required."]);
+            ResponseHelper::error(400, 'Name and email are required.');
             return;
         }
         $this->user->name = $data['name'];
@@ -87,16 +84,14 @@ class UserController {
                 'email' => $this->user->email,
             ]);
         } else {
-            http_response_code(500);
-            echo json_encode(["message" => "Unable to create user."]);
+            ResponseHelper::error(500, 'Unable to create user.');
         }
     }
 
     private function updateUser($id) {
         $data = json_decode(file_get_contents("php://input"), true);
         if (empty($data['name']) || empty($data['email'])) {
-            http_response_code(400);
-            echo json_encode(["message" => "Name and email are required."]);
+            ResponseHelper::error(400, 'Name and email are required.');
             return;
         }
         $this->user->id = $id;
@@ -109,18 +104,16 @@ class UserController {
                 'email' => $this->user->email,
             ]);
         } else {
-            http_response_code(500);
-            echo json_encode(["message" => "Unable to update user."]);
+            ResponseHelper::error(500, 'Unable to update user.');
         }
     }
 
     private function deleteUser($id) {
         $this->user->id = $id;
         if ($this->user->delete()) {
-            echo json_encode(["message" => "User deleted."]);
+            echo json_encode(["message" => "User deleted."]); 
         } else {
-            http_response_code(500);
-            echo json_encode(["message" => "Unable to delete user."]);
+            ResponseHelper::error(500, 'Unable to delete user.');
         }
     }
 }

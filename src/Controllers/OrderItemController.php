@@ -8,6 +8,8 @@ use App\Models\OrderItem;
 use App\Models\Wallet;
 use App\Core\RoleGuard;
 use App\Core\LoggerTrait;
+use App\Core\ResponseHelper;
+use App\Core\Validator;
 use PDO;
 
 class OrderItemController {
@@ -39,21 +41,18 @@ class OrderItemController {
                 if ($id) {
                     $this->updateItem($id);
                 } else {
-                    http_response_code(400);
-                    echo json_encode(["message" => "Item ID required for PUT."]);
+                    ResponseHelper::error(400, 'Item ID required for PUT.');
                 }
                 break;
             case 'DELETE':
                 if ($id) {
                     $this->deleteItem($id);
                 } else {
-                    http_response_code(400);
-                    echo json_encode(["message" => "Item ID required for DELETE."]);
+                    ResponseHelper::error(400, 'Item ID required for DELETE.');
                 }
                 break;
             default:
-                http_response_code(405);
-                echo json_encode(["message" => "Method not allowed."]);
+                ResponseHelper::error(405, 'Method not allowed.');
                 break;
         }
     }
@@ -111,8 +110,7 @@ class OrderItemController {
                 'status' => $row['status'],
             ]);
         } else {
-            http_response_code(404);
-            echo json_encode(["message" => "Item not found."]);
+            ResponseHelper::error(404, 'Item not found.');
         }
     }
 
@@ -122,16 +120,25 @@ class OrderItemController {
         $required = ['order_id', 'product_name', 'quantity', 'status', 'user_id'];
         foreach ($required as $field) {
             if (empty($data[$field])) {
-                http_response_code(400);
-                echo json_encode(["message" => "$field is required."]);
+                ResponseHelper::error(400, "$field is required.");
                 return;
             }
         }
 
+        if (!Validator::validateInt($data['order_id']) || !Validator::validateInt($data['user_id']) || !Validator::validateFloat($data['quantity'])) {
+            ResponseHelper::error(400, 'Invalid input format.');
+            return;
+        }
+
+        if ((isset($data['estimated_cost']) && $data['estimated_cost'] !== null && !Validator::validateFloat($data['estimated_cost'])) ||
+            (isset($data['actual_cost']) && $data['actual_cost'] !== null && !Validator::validateFloat($data['actual_cost']))) {
+            ResponseHelper::error(400, 'Invalid cost format.');
+            return;
+        }
+
         $guard = new RoleGuard();
         if (!$guard->checkRole($data['user_id'], ['owner'])) {
-            http_response_code(403);
-            echo json_encode(["message" => "Only owners can add items."]);
+            ResponseHelper::error(403, 'Only owners can add items.'); 
             return;
         }
         $this->item->order_id = $data['order_id'];
@@ -155,8 +162,7 @@ class OrderItemController {
                 'status' => $this->item->status,
             ]);
         } else {
-            http_response_code(500);
-            echo json_encode(["message" => "Unable to create item."]);
+            ResponseHelper::error(500, 'Unable to create item.');
         }
     }
 
@@ -166,16 +172,25 @@ class OrderItemController {
         $required = ['product_name', 'quantity', 'status', 'user_id'];
         foreach ($required as $field) {
             if (empty($data[$field])) {
-                http_response_code(400);
-                echo json_encode(["message" => "$field is required."]);
+                ResponseHelper::error(400, "$field is required.");
                 return;
             }
         }
 
+        if (!Validator::validateInt($data['user_id']) || !Validator::validateFloat($data['quantity'])) {
+            ResponseHelper::error(400, 'Invalid input format.');
+            return;
+        }
+
+        if ((isset($data['estimated_cost']) && $data['estimated_cost'] !== null && !Validator::validateFloat($data['estimated_cost'])) ||
+            (isset($data['actual_cost']) && $data['actual_cost'] !== null && !Validator::validateFloat($data['actual_cost']))) {
+            ResponseHelper::error(400, 'Invalid cost format.');
+            return;
+        }
+
         $guard = new RoleGuard();
         if (!$guard->checkRole($data['user_id'], ['assistant', 'owner'])) {
-            http_response_code(403);
-            echo json_encode(["message" => "Permission denied."]);
+            ResponseHelper::error(403, 'Permission denied.');
             return;
         }
 
@@ -204,8 +219,7 @@ class OrderItemController {
                 'status' => $this->item->status,
             ]);
         } else {
-            http_response_code(500);
-            echo json_encode(["message" => "Unable to update item."]);
+            ResponseHelper::error(500, 'Unable to update item.');
         }
     }
 
@@ -213,14 +227,17 @@ class OrderItemController {
     {
         $data = json_decode(file_get_contents('php://input'), true);
         if (empty($data['user_id'])) {
-            http_response_code(400);
-            echo json_encode(["message" => "user_id is required."]); 
+            ResponseHelper::error(400, 'user_id is required.');
+            return;
+        }
+
+        if (!Validator::validateInt($data['user_id'])) {
+            ResponseHelper::error(400, 'Invalid user_id.');
             return;
         }
         $guard = new RoleGuard();
         if (!$guard->checkRole($data['user_id'], ['owner'])) {
-            http_response_code(403);
-            echo json_encode(["message" => "Only owners can delete items."]); 
+            ResponseHelper::error(403, 'Only owners can delete items.');
             return;
         }
         $this->item->id = $id;
@@ -228,8 +245,7 @@ class OrderItemController {
             $this->logAction('order_item', $id, 'delete', (int)$data['user_id'], $data);
             echo json_encode(["message" => "Item deleted."]); 
         } else {
-            http_response_code(500);
-            echo json_encode(["message" => "Unable to delete item."]); 
+            ResponseHelper::error(500, 'Unable to delete item.');
         }
     }
 }

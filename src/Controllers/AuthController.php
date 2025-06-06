@@ -4,6 +4,7 @@
 namespace App\Controllers;
 
 use App\Core\Database;
+use App\Core\ResponseHelper;
 use PDO;
 
 class AuthController {
@@ -17,8 +18,12 @@ class AuthController {
     public function login() {
         $data = json_decode(file_get_contents("php://input"), true);
         if (empty($data['email']) || empty($data['password'])) {
-            http_response_code(400);
-            echo json_encode(["message" => "Email and password are required."]);
+            ResponseHelper::error(400, 'Email and password are required.');
+            return;
+        }
+
+        if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            ResponseHelper::error(400, 'Invalid email format.');
             return;
         }
         // Validate against users table; passwords are stored using password_hash
@@ -36,8 +41,7 @@ class AuthController {
                 return;
             }
         }
-        http_response_code(401);
-        echo json_encode(["message" => "Invalid credentials."]);
+        ResponseHelper::error(401, 'Invalid credentials.');
     }
 
     public function logout() {
@@ -48,8 +52,7 @@ class AuthController {
     public function me() {
         // Retrieve token from headers and return user info (not fully implemented)
         if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
-            http_response_code(401);
-            echo json_encode(["message" => "No token provided."]);
+            ResponseHelper::error(401, 'No token provided.');
             return;
         }
         $token = str_replace("Bearer ", "", $_SERVER['HTTP_AUTHORIZATION']);

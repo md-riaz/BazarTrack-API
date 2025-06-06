@@ -5,6 +5,8 @@ namespace App\Controllers;
 
 use App\Core\Database;
 use App\Models\HistoryLog;
+use App\Core\ResponseHelper;
+use App\Core\Validator;
 use PDO;
 
 class HistoryLogController {
@@ -33,13 +35,11 @@ class HistoryLogController {
                 if ($id) {
                     $this->deleteLog($id);
                 } else {
-                    http_response_code(400);
-                    echo json_encode(["message" => "Log ID required for DELETE."]);
+                    ResponseHelper::error(400, 'Log ID required for DELETE.');
                 }
                 break;
             default:
-                http_response_code(405);
-                echo json_encode(["message" => "Method not allowed."]);
+                ResponseHelper::error(405, 'Method not allowed.');
                 break;
         }
     }
@@ -85,10 +85,14 @@ class HistoryLogController {
         $required = ['entity_type', 'entity_id', 'action', 'changed_by_user_id', 'timestamp', 'data_snapshot'];
         foreach ($required as $field) {
             if (empty($data[$field])) {
-                http_response_code(400);
-                echo json_encode(["message" => "$field is required."]);
+                ResponseHelper::error(400, "$field is required.");
                 return;
             }
+        }
+
+        if (!Validator::validateInt($data['entity_id']) || !Validator::validateInt($data['changed_by_user_id']) || !Validator::validateDate($data['timestamp'])) {
+            ResponseHelper::error(400, 'Invalid input format.');
+            return;
         }
         $this->log->entity_type = $data['entity_type'];
         $this->log->entity_id = $data['entity_id'];
@@ -108,8 +112,7 @@ class HistoryLogController {
                 'data_snapshot' => $this->log->data_snapshot,
             ]);
         } else {
-            http_response_code(500);
-            echo json_encode(["message" => "Unable to create log."]);
+            ResponseHelper::error(500, 'Unable to create log.');
         }
     }
 
@@ -118,8 +121,7 @@ class HistoryLogController {
         if ($this->log->delete()) {
             echo json_encode(["message" => "Log deleted."]);
         } else {
-            http_response_code(500);
-            echo json_encode(["message" => "Unable to delete log."]);
+            ResponseHelper::error(500, 'Unable to delete log.');
         }
     }
 }
