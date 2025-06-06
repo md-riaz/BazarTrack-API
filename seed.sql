@@ -9,6 +9,16 @@ CREATE TABLE IF NOT EXISTS users (
     role VARCHAR(50) NOT NULL
 );
 
+-- Tokens table
+CREATE TABLE IF NOT EXISTS tokens (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    token VARCHAR(64) NOT NULL,
+    created_at DATETIME NOT NULL,
+    revoked_at DATETIME NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
 -- Wallets table
 CREATE TABLE IF NOT EXISTS wallets (
     user_id INT PRIMARY KEY,

@@ -6,6 +6,7 @@ namespace App\Controllers;
 use App\Core\Database;
 use App\Models\Wallet;
 use PDO;
+use App\Core\AuthMiddleware;
 
 class WalletController {
     private $db;
@@ -18,6 +19,9 @@ class WalletController {
     }
 
     public function processRequest($method, $user_id = null) {
+        if (!AuthMiddleware::check()) {
+            return;
+        }
         switch ($method) {
             case 'GET':
                 if ($user_id) {
@@ -46,6 +50,9 @@ class WalletController {
     }
 
     public function getTransactions($user_id) {
+        if (!AuthMiddleware::check()) {
+            return;
+        }
         $stmt = $this->wallet->readTransactions($user_id);
         $transactions_arr = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
