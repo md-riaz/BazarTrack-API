@@ -8,7 +8,7 @@ BazarTrack-API provides a JSON REST service for a smart purchase and money manag
 - MySQL
 
 Copy `.env.example` to `.env` and update the values before running the API.
-It defines variables like `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` and `ALLOWED_ORIGIN`.
+It defines variables like `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS` and `ALLOWED_ORIGIN`.
 
 ## User setup
 
