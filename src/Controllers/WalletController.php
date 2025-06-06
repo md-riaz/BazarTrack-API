@@ -5,6 +5,8 @@ namespace App\Controllers;
 
 use App\Core\Database;
 use App\Models\Wallet;
+use App\Core\ResponseHelper;
+use App\Core\Validator;
 use PDO;
 use App\Core\AuthMiddleware;
 
@@ -25,34 +27,47 @@ class WalletController {
         switch ($method) {
             case 'GET':
                 if ($user_id) {
+                    if (!Validator::validateInt($user_id)) {
+                        ResponseHelper::error(400, 'Invalid user ID.');
+                        break;
+                    }
                     $this->getBalance($user_id);
                 } else {
-                    http_response_code(400);
-                    echo json_encode(["message" => "User ID required."]);
+                    ResponseHelper::error(400, 'User ID required.');
                 }
                 break;
             default:
-                http_response_code(405);
-                echo json_encode(["message" => "Method not allowed."]);
+                ResponseHelper::error(405, 'Method not allowed.');
                 break;
         }
     }
 
     private function getBalance($user_id) {
+        if (!Validator::validateInt($user_id)) {
+            ResponseHelper::error(400, 'Invalid user ID.');
+            return;
+        }
+
         $stmt = $this->wallet->getBalance($user_id);
         if ($stmt->rowCount() === 1) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             echo json_encode(["user_id" => $user_id, "balance" => $row['balance']]);
         } else {
-            http_response_code(404);
-            echo json_encode(["message" => "Wallet not found."]);
+            ResponseHelper::error(404, 'Wallet not found.');
         }
     }
 
     public function getTransactions($user_id) {
+        if (!Validator::validateInt($user_id)) {
+            ResponseHelper::error(400, 'Invalid user ID.');
+            return;
+        }
+
+
         if (!AuthMiddleware::check()) {
             return;
         }
+
         $stmt = $this->wallet->readTransactions($user_id);
         $transactions_arr = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {

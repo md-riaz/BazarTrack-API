@@ -8,6 +8,10 @@ use App\Models\Payment;
 use App\Models\Wallet;
 use App\Core\RoleGuard;
 use App\Core\LoggerTrait;
+
+use App\Core\ResponseHelper;
+use App\Core\Validator;
+
 use App\Core\AuthMiddleware;
 use PDO;
 
@@ -34,8 +38,7 @@ class PaymentController {
                 $this->createPayment();
                 break;
             default:
-                http_response_code(405);
-                echo json_encode(["message" => "Method not allowed."]);
+                ResponseHelper::error(405, 'Method not allowed.');
                 break;
         }
     }
@@ -61,21 +64,31 @@ class PaymentController {
         $required = ['user_id', 'amount', 'type', 'created_at', 'created_by'];
         foreach ($required as $field) {
             if (empty($data[$field])) {
-                http_response_code(400);
-                echo json_encode(["message" => "$field is required."]);
+                ResponseHelper::error(400, "$field is required.");
                 return;
             }
         }
 
+        if (!Validator::validateInt($data['user_id']) ||
+            !Validator::validateFloat($data['amount']) ||
+            !Validator::validateInt($data['created_by']) ||
+            !Validator::validateDate($data['created_at'])) {
+            ResponseHelper::error(400, 'Invalid data format.');
+            return;
+        }
+
+        if (!in_array($data['type'], ['credit', 'debit'], true)) {
+            ResponseHelper::error(400, 'Invalid type.');
+            return;
+        }
+
         $guard = new RoleGuard();
         if ($data['type'] === 'credit' && !$guard->checkRole($data['created_by'], ['owner'])) {
-            http_response_code(403);
-            echo json_encode(["message" => "Only owners can credit wallets."]);
+            ResponseHelper::error(403, 'Only owners can credit wallets.');
             return;
         }
         if ($data['type'] === 'debit' && !$guard->checkRole($data['created_by'], ['assistant'])) {
-            http_response_code(403);
-            echo json_encode(["message" => "Only assistants can record expenses."]);
+            ResponseHelper::error(403, 'Only assistants can record expenses.');
             return;
         }
 
@@ -100,8 +113,7 @@ class PaymentController {
                 'created_at' => $this->payment->created_at,
             ]);
         } else {
-            http_response_code(500);
-            echo json_encode(["message" => "Unable to create payment."]);
+            ResponseHelper::error(500, 'Unable to create payment.');
         }
     }
 }

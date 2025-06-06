@@ -5,6 +5,7 @@ namespace App\Core;
 
 use PDO;
 use PDOException;
+use App\Core\ResponseHelper;
 
 class Database {
     private $host;
@@ -34,8 +35,7 @@ class Database {
             );
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $exception) {
-            http_response_code(500);
-            echo json_encode(["error" => "Database Connection Error: " . $exception->getMessage()]);
+            ResponseHelper::error(500, 'Database Connection Error: ' . $exception->getMessage());
             exit;
         }
         return $this->conn;

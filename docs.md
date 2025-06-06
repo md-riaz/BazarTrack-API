@@ -2,6 +2,11 @@
 
 This document describes the available HTTP endpoints for the BazarTrack API. All responses are JSON encoded.
 
+Error responses share a common structure:
+```json
+{ "error": "<message>" }
+```
+
 ## Authentication
 
 ### `POST /api/auth/login`
@@ -489,4 +494,4 @@ Return monthly order counts and revenue totals.
 
 ---
 
-All timestamps follow the `YYYY-MM-DD HH:MM:SS` format. Endpoints may return standard HTTP error codes for validation or authorization failures.
+All timestamps follow the `YYYY-MM-DD HH:MM:SS` format. Endpoints may return standard HTTP error codes for validation or authorization failures. Error bodies follow the structure shown above.
