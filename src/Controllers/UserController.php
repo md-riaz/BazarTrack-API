@@ -6,6 +6,7 @@ namespace App\Controllers;
 use App\Core\Database;
 use App\Models\User;
 use PDO;
+use App\Core\AuthMiddleware;
 
 class UserController {
     private $db;
@@ -18,6 +19,9 @@ class UserController {
     }
 
     public function processRequest($method, $id = null) {
+        if (!AuthMiddleware::check()) {
+            return;
+        }
         switch ($method) {
             case 'GET':
                 if ($id) {

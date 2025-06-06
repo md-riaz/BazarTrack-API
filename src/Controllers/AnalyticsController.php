@@ -5,6 +5,7 @@ namespace App\Controllers;
 
 use App\Core\Database;
 use PDO;
+use App\Core\AuthMiddleware;
 
 class AnalyticsController {
     private $db;
@@ -15,6 +16,9 @@ class AnalyticsController {
     }
 
     public function dashboard() {
+        if (!AuthMiddleware::check()) {
+            return;
+        }
         $stmt = $this->db->query("SELECT COUNT(*) AS total FROM users");
         $totalUsers = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
@@ -36,6 +40,9 @@ class AnalyticsController {
     }
 
     public function reports() {
+        if (!AuthMiddleware::check()) {
+            return;
+        }
         $ordersStmt = $this->db->query(
             "SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, COUNT(*) AS count " .
             "FROM orders GROUP BY month ORDER BY month"
