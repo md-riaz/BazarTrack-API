@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Core\ResponseHelper;
 use App\Core\Validator;
 use PDO;
+use App\Core\AuthMiddleware;
 
 class UserController {
     private $db;
@@ -20,6 +21,9 @@ class UserController {
     }
 
     public function processRequest($method, $id = null) {
+        if (!AuthMiddleware::check()) {
+            return;
+        }
         switch ($method) {
             case 'GET':
                 if ($id) {

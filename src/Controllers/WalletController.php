@@ -8,6 +8,7 @@ use App\Models\Wallet;
 use App\Core\ResponseHelper;
 use App\Core\Validator;
 use PDO;
+use App\Core\AuthMiddleware;
 
 class WalletController {
     private $db;
@@ -20,6 +21,9 @@ class WalletController {
     }
 
     public function processRequest($method, $user_id = null) {
+        if (!AuthMiddleware::check()) {
+            return;
+        }
         switch ($method) {
             case 'GET':
                 if ($user_id) {
@@ -56,6 +60,11 @@ class WalletController {
     public function getTransactions($user_id) {
         if (!Validator::validateInt($user_id)) {
             ResponseHelper::error(400, 'Invalid user ID.');
+            return;
+        }
+
+
+        if (!AuthMiddleware::check()) {
             return;
         }
 

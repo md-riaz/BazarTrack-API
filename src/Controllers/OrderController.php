@@ -8,8 +8,12 @@ use App\Models\Order;
 use PDO;
 use App\Core\RoleGuard;
 use App\Core\LoggerTrait;
+
 use App\Core\ResponseHelper;
 use App\Core\Validator;
+
+use App\Core\AuthMiddleware;
+
 
 class OrderController {
     use LoggerTrait;
@@ -33,6 +37,9 @@ class OrderController {
     }
 
     public function processRequest($method, $id = null) {
+        if (!AuthMiddleware::check()) {
+            return;
+        }
         switch ($method) {
             case 'GET':
                 if ($id) {
@@ -192,6 +199,8 @@ class OrderController {
     {
         if (!Validator::validateInt($id)) {
             ResponseHelper::error(400, 'Invalid order ID.');
+}
+        if (!AuthMiddleware::check()) {
             return;
         }
         $data = json_decode(file_get_contents('php://input'), true);
@@ -231,6 +240,8 @@ class OrderController {
     {
         if (!Validator::validateInt($id)) {
             ResponseHelper::error(400, 'Invalid order ID.');
+}
+        if (!AuthMiddleware::check()) {
             return;
         }
         $data = json_decode(file_get_contents('php://input'), true);

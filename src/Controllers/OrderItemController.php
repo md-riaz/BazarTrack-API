@@ -10,6 +10,9 @@ use App\Core\RoleGuard;
 use App\Core\LoggerTrait;
 use App\Core\ResponseHelper;
 use App\Core\Validator;
+
+use App\Core\AuthMiddleware;
+
 use PDO;
 
 class OrderItemController {
@@ -24,6 +27,9 @@ class OrderItemController {
     }
 
     public function processRequest($method, $id = null, $parentId = null) {
+        if (!AuthMiddleware::check()) {
+            return;
+        }
         switch ($method) {
             case 'GET':
                 if ($id) {

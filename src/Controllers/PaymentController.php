@@ -8,8 +8,11 @@ use App\Models\Payment;
 use App\Models\Wallet;
 use App\Core\RoleGuard;
 use App\Core\LoggerTrait;
+
 use App\Core\ResponseHelper;
 use App\Core\Validator;
+
+use App\Core\AuthMiddleware;
 use PDO;
 
 class PaymentController {
@@ -24,6 +27,9 @@ class PaymentController {
     }
 
     public function processRequest($method, $id = null) {
+        if (!AuthMiddleware::check()) {
+            return;
+        }
         switch ($method) {
             case 'GET':
                 $this->getPayments();
