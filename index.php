@@ -12,7 +12,10 @@ use App\Controllers\PaymentController;
 use App\Controllers\WalletController;
 use App\Controllers\AnalyticsController;
 
-header("Access-Control-Allow-Origin: *");
+$allowedOrigin = getenv('CORS_ORIGIN');
+if ($allowedOrigin !== false) {
+    header("Access-Control-Allow-Origin: $allowedOrigin");
+}
 header("Content-Type: application/json; charset=UTF-8");
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
