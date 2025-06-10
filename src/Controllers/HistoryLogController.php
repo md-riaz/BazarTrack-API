@@ -86,7 +86,7 @@ class HistoryLogController {
 
     private function createLog() {
         $data = json_decode(file_get_contents("php://input"), true);
-        $required = ['entity_type', 'entity_id', 'action', 'changed_by_user_id', 'timestamp', 'data_snapshot'];
+        $required = ['entity_type', 'entity_id', 'action', 'timestamp', 'data_snapshot'];
         foreach ($required as $field) {
             if (empty($data[$field])) {
                 ResponseHelper::error(400, "$field is required.");
@@ -94,14 +94,14 @@ class HistoryLogController {
             }
         }
 
-        if (!Validator::validateInt($data['entity_id']) || !Validator::validateInt($data['changed_by_user_id']) || !Validator::validateDate($data['timestamp'])) {
+        if (!Validator::validateInt($data['entity_id']) || !Validator::validateDate($data['timestamp'])) {
             ResponseHelper::error(400, 'Invalid input format.');
             return;
         }
         $this->log->entity_type = $data['entity_type'];
         $this->log->entity_id = $data['entity_id'];
         $this->log->action = $data['action'];
-        $this->log->changed_by_user_id = $data['changed_by_user_id'];
+        $this->log->changed_by_user_id = AuthMiddleware::$userId;
         $this->log->timestamp = $data['timestamp'];
         $this->log->data_snapshot = $data['data_snapshot'];
         if ($this->log->create()) {
