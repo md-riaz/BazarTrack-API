@@ -7,6 +7,7 @@ use App\Core\Database;
 use App\Core\ResponseHelper;
 use App\Models\Token;
 use PDO;
+use App\Core\AuthMiddleware;
 
 class AuthController {
     private $db;
@@ -57,9 +58,7 @@ class AuthController {
     }
 
     public function logout() {
-        if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
-            http_response_code(401);
-            echo json_encode(['message' => 'Unauthorized']);
+        if (!AuthMiddleware::check()) {
             return;
         }
         $header = $_SERVER['HTTP_AUTHORIZATION'];
@@ -70,18 +69,12 @@ class AuthController {
     }
 
     public function me() {
-        if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
-            ResponseHelper::error(401, 'No token provided.');
+        if (!AuthMiddleware::check()) {
             return;
         }
         $tokenValue = str_replace('Bearer ', '', $_SERVER['HTTP_AUTHORIZATION']);
         $token = new Token($this->db);
         $userId = $token->findUserId($tokenValue);
-        if (!$userId) {
-            http_response_code(401);
-            echo json_encode(['message' => 'Unauthorized']);
-            return;
-        }
         $stmt = $this->db->prepare('SELECT id, name, email, role FROM users WHERE id = ? LIMIT 1');
         $stmt->bindParam(1, $userId);
         $stmt->execute();
@@ -90,19 +83,12 @@ class AuthController {
     }
 
     public function refresh() {
-        if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
-            http_response_code(401);
-            echo json_encode(['message' => 'Unauthorized']);
+        if (!AuthMiddleware::check()) {
             return;
         }
         $oldTokenValue = str_replace('Bearer ', '', $_SERVER['HTTP_AUTHORIZATION']);
         $token = new Token($this->db);
         $userId = $token->findUserId($oldTokenValue);
-        if (!$userId) {
-            http_response_code(401);
-            echo json_encode(['message' => 'Unauthorized']);
-            return;
-        }
         $token->revoke($oldTokenValue);
 
         $newValue = bin2hex(random_bytes(16));
