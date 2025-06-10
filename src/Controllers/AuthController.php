@@ -72,7 +72,7 @@ class AuthController {
     public function me() {
         if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
             ResponseHelper::error(401, 'No token provided.');
-
+            return;
         }
         $tokenValue = str_replace('Bearer ', '', $_SERVER['HTTP_AUTHORIZATION']);
         $token = new Token($this->db);

@@ -31,6 +31,7 @@ Authenticate a user.
 
 ### `POST /api/auth/logout`
 Invalidate the current token.
+Requires an `Authorization: Bearer <token>` header.
 
 **Response**
 ```json
@@ -41,6 +42,7 @@ Invalidate the current token.
 
 ### `GET /api/auth/me`
 Return basic information about the authenticated user.
+Requires an `Authorization: Bearer <token>` header.
 
 **Response**
 ```json
@@ -54,6 +56,7 @@ Return basic information about the authenticated user.
 
 ### `POST /api/auth/refresh`
 Issue a new token.
+Requires an `Authorization: Bearer <token>` header.
 
 **Response**
 ```json
