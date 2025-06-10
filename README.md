@@ -57,7 +57,7 @@ All requests are routed through `index.php`.
 
 ### CORS configuration
 
-Set an environment variable called `CORS_ORIGIN` with the URL allowed to access
+Set an environment variable called `ALLOWED_ORIGIN` with the URL allowed to access
 the API. When defined, `index.php` will include an `Access-Control-Allow-Origin`
 header for that origin.
 

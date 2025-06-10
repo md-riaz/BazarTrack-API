@@ -1,10 +1,15 @@
 <?php
 // File: index.php
+// show errors
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 require __DIR__ . '/autoload.php';
 
+// Load environment variables
+require __DIR__ . '/config.php';
+
 use App\Controllers\AuthController;
-use App\Controllers\UserController;
 use App\Controllers\OrderController;
 use App\Controllers\OrderItemController;
 use App\Controllers\HistoryLogController;
@@ -13,7 +18,7 @@ use App\Controllers\WalletController;
 use App\Controllers\AnalyticsController;
 use App\Core\ResponseHelper;
 
-$allowedOrigin = getenv('CORS_ORIGIN');
+$allowedOrigin = $_ENV['ALLOWED_ORIGIN'];
 if ($allowedOrigin !== false) {
     header("Access-Control-Allow-Origin: $allowedOrigin");
 }
@@ -25,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
-$path = isset($_SERVER['PATH_INFO']) ? trim($_SERVER['PATH_INFO'], '/') : '';
+$path = isset($_SERVER['REQUEST_URI']) ? trim($_SERVER['REQUEST_URI'], '/') : '';
 $segments = explode('/', $path);
 
 $resource = $segments[0] ?? null;

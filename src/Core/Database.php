@@ -16,13 +16,10 @@ class Database {
 
     public function __construct()
     {
-        // Load configuration so environment variables from .env are available
-        require_once __DIR__ . '/../../config.php';
-
-        $this->host = getenv('DB_HOST') ?: 'localhost';
-        $this->db_name = getenv('DB_NAME') ?: 'test_db';
-        $this->username = getenv('DB_USER') ?: 'root';
-        $this->password = getenv('DB_PASSWORD') ?: '';
+        $this->host = $_ENV['DB_HOST'] ?: 'localhost';
+        $this->db_name = $_ENV['DB_NAME'] ?: 'test_db';
+        $this->username = $_ENV['DB_USER'] ?: 'root';
+        $this->password = $_ENV['DB_PASS'] ?: '';
     }
 
     public function getConnection() {
