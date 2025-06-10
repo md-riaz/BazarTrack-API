@@ -111,30 +111,31 @@ class OrderController {
 
     private function createOrder() {
         $data = json_decode(file_get_contents("php://input"), true);
-        if (empty($data['created_by']) || empty($data['status']) || empty($data['created_at'])) {
-            ResponseHelper::error(400, 'created_by, status, and created_at are required.');
+        if (empty($data['status']) || empty($data['created_at'])) {
+            ResponseHelper::error(400, 'status and created_at are required.');
             return;
         }
 
-        if (!Validator::validateInt($data['created_by']) ||
+        if (
             (isset($data['assigned_to']) && $data['assigned_to'] !== null && !Validator::validateInt($data['assigned_to'])) ||
             !Validator::validateDate($data['created_at']) ||
-            (isset($data['completed_at']) && $data['completed_at'] !== null && !Validator::validateDate($data['completed_at']))) {
+            (isset($data['completed_at']) && $data['completed_at'] !== null && !Validator::validateDate($data['completed_at']))
+        ) {
             ResponseHelper::error(400, 'Invalid input format.');
             return;
         }
         $guard = new RoleGuard();
-        if (!$guard->checkRole($data['created_by'], ['owner'])) {
+        if (!$guard->checkRole(AuthMiddleware::$userId, ['owner'])) {
             ResponseHelper::error(403, 'Only owners can create orders.');
             return;
         }
-        $this->order->created_by = $data['created_by'];
+        $this->order->created_by = AuthMiddleware::$userId;
         $this->order->assigned_to = $data['assigned_to'] ?? null;
         $this->order->status = $data['status'];
         $this->order->created_at = $data['created_at'];
         $this->order->completed_at = $data['completed_at'] ?? null;
         if ($this->order->create()) {
-            $this->logAction('order', $this->order->id, 'create', (int)$data['created_by'], $data);
+            $this->logAction('order', $this->order->id, 'create', AuthMiddleware::$userId, $data);
             http_response_code(201);
             echo json_encode([
                 'id' => $this->order->id,
@@ -204,23 +205,23 @@ class OrderController {
             return;
         }
         $data = json_decode(file_get_contents('php://input'), true);
-        if (empty($data['user_id']) || empty($data['assigned_by'])) {
-            ResponseHelper::error(400, 'user_id and assigned_by are required.');
+        if (empty($data['user_id'])) {
+            ResponseHelper::error(400, 'user_id is required.');
             return;
         }
 
-        if (!Validator::validateInt($data['user_id']) || !Validator::validateInt($data['assigned_by'])) {
-            ResponseHelper::error(400, 'Invalid user_id or assigned_by.');
+        if (!Validator::validateInt($data['user_id'])) {
+            ResponseHelper::error(400, 'Invalid user_id.');
             return;
         }
 
         $guard = new RoleGuard();
-        $isSelf = (int)$data['user_id'] === (int)$data['assigned_by'];
-        if ($isSelf && !$guard->checkRole($data['assigned_by'], ['assistant'])) {
+        $isSelf = (int)$data['user_id'] === AuthMiddleware::$userId;
+        if ($isSelf && !$guard->checkRole(AuthMiddleware::$userId, ['assistant'])) {
             ResponseHelper::error(403, 'Only assistants can self-assign.');
             return;
         }
-        if (!$isSelf && !$guard->checkRole($data['assigned_by'], ['owner'])) {
+        if (!$isSelf && !$guard->checkRole(AuthMiddleware::$userId, ['owner'])) {
             ResponseHelper::error(403, 'Only owners can assign others.');
             return;
         }
@@ -229,7 +230,7 @@ class OrderController {
         $this->order->assigned_to = $data['user_id'];
         $this->order->status = 'assigned';
         if ($this->order->update()) {
-            $this->logAction('order', $id, 'assign', (int)$data['assigned_by'], $data);
+            $this->logAction('order', $id, 'assign', AuthMiddleware::$userId, $data);
             echo json_encode(["message" => "Order assigned."]);
         } else {
             ResponseHelper::error(500, 'Unable to assign order.');
@@ -245,28 +246,22 @@ class OrderController {
             return;
         }
         $data = json_decode(file_get_contents('php://input'), true);
-        if (empty($data['user_id'])) {
-            ResponseHelper::error(400, 'user_id is required.');
-            return;
-        }
-
-        if (!Validator::validateInt($data['user_id']) ||
-            (isset($data['completed_at']) && $data['completed_at'] !== null && !Validator::validateDate($data['completed_at']))) {
+        if (isset($data['completed_at']) && $data['completed_at'] !== null && !Validator::validateDate($data['completed_at'])) {
             ResponseHelper::error(400, 'Invalid input format.');
             return;
         }
         $guard = new RoleGuard();
-        if (!$guard->checkRole($data['user_id'], ['assistant'])) {
+        if (!$guard->checkRole(AuthMiddleware::$userId, ['assistant'])) {
             ResponseHelper::error(403, 'Only assistants can complete orders.');
             return;
         }
         $this->order->id = $id;
-        $this->order->assigned_to = $data['user_id'];
+        $this->order->assigned_to = AuthMiddleware::$userId;
         $this->order->status = 'completed';
         $this->order->completed_at = $data['completed_at'] ?? null;
         if ($this->order->update()) {
-            $this->logAction('order', $id, 'complete', (int)$data['user_id'], $data);
-            echo json_encode(["message" => "Order marked as completed."]); 
+            $this->logAction('order', $id, 'complete', AuthMiddleware::$userId, $data);
+            echo json_encode(["message" => "Order marked as completed."]);
         } else {
             ResponseHelper::error(500, 'Unable to complete order.');
         }

@@ -61,7 +61,7 @@ class PaymentController {
     private function createPayment()
     {
         $data = json_decode(file_get_contents('php://input'), true);
-        $required = ['user_id', 'amount', 'type', 'created_at', 'created_by'];
+        $required = ['user_id', 'amount', 'type', 'created_at'];
         foreach ($required as $field) {
             if (empty($data[$field])) {
                 ResponseHelper::error(400, "$field is required.");
@@ -71,7 +71,6 @@ class PaymentController {
 
         if (!Validator::validateInt($data['user_id']) ||
             !Validator::validateFloat($data['amount']) ||
-            !Validator::validateInt($data['created_by']) ||
             !Validator::validateDate($data['created_at'])) {
             ResponseHelper::error(400, 'Invalid data format.');
             return;
@@ -83,11 +82,11 @@ class PaymentController {
         }
 
         $guard = new RoleGuard();
-        if ($data['type'] === 'credit' && !$guard->checkRole($data['created_by'], ['owner'])) {
+        if ($data['type'] === 'credit' && !$guard->checkRole(AuthMiddleware::$userId, ['owner'])) {
             ResponseHelper::error(403, 'Only owners can credit wallets.');
             return;
         }
-        if ($data['type'] === 'debit' && !$guard->checkRole($data['created_by'], ['assistant'])) {
+        if ($data['type'] === 'debit' && !$guard->checkRole(AuthMiddleware::$userId, ['assistant'])) {
             ResponseHelper::error(403, 'Only assistants can record expenses.');
             return;
         }
@@ -103,7 +102,7 @@ class PaymentController {
             $amount = $data['type'] === 'credit' ? $data['amount'] : -$data['amount'];
             $wallet->updateBalance($data['user_id'], $amount);
             $wallet->addTransaction($data['user_id'], $data['amount'], $data['type'], $data['created_at']);
-            $this->logAction('payment', $this->payment->id, 'create', (int)$data['created_by'], $data);
+            $this->logAction('payment', $this->payment->id, 'create', AuthMiddleware::$userId, $data);
             http_response_code(201);
             echo json_encode([
                 'id' => $this->payment->id,

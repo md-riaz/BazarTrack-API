@@ -101,12 +101,12 @@ Create a new order. Only users with the `owner` role may create orders.
 }
 ```
 
-**Body parameters**
-- `created_by` – user id of the owner creating the order (required)
+-**Body parameters**
 - `assigned_to` – user id of the assistant the order is assigned to (optional)
 - `status` – order status string (required)
 - `created_at` – datetime string (required)
 - `completed_at` – datetime string (optional)
+The `created_by` value is taken from the authenticated token.
 
 ### `GET /api/orders/{id}`
 Retrieve a single order by id.
@@ -165,7 +165,7 @@ Assign an order to a user.
 
 **Body parameters**
 - `user_id` – id of the user the order will be assigned to
-- `assigned_by` – id of the user performing the assignment
+The assigning user is taken from the authenticated token.
 
 Owners may assign any order; assistants may assign orders to themselves.
 
@@ -182,8 +182,8 @@ Mark an order as completed.
 ```
 
 **Body parameters**
-- `user_id` – id of the assistant completing the order
 - `completed_at` – completion datetime (optional)
+The assistant completing the order is inferred from the authenticated token.
 
 Only assistants can mark orders as completed.
 
@@ -265,7 +265,7 @@ Create a new order item. Only owners can add items.
 - `estimated_cost` – estimated price (optional)
 - `actual_cost` – final price (optional)
 - `status` – item status (required)
-- `user_id` – id of the owner creating the item (required)
+The creating user is taken from the authenticated token.
 
 ### `PUT /api/order_items/{order_id}/{id}`
 Update an order item. Assistants and owners may update items.
@@ -291,7 +291,7 @@ Update an order item. Assistants and owners may update items.
 - `estimated_cost` – estimated price (optional)
 - `actual_cost` – final price (optional)
 - `status` – item status (required)
-- `user_id` – id of the user making the change (required)
+The user performing the update is inferred from the authenticated token.
 
 If `actual_cost` is supplied, the amount is debited from the user's wallet.
 
@@ -306,7 +306,7 @@ Delete an order item. Only owners can delete items.
 ```
 
 **Body parameters**
-- `user_id` – id of the owner deleting the item
+The deleting user is taken from the authenticated token.
 
 ---
 
@@ -347,7 +347,7 @@ Record a payment or expense.
 - `amount` – monetary amount (required)
 - `type` – `credit` or `debit` (required)
 - `created_at` – datetime string (required)
-- `created_by` – id of the user creating the payment (required)
+The `created_by` value comes from the authenticated token.
 
 Credits may only be created by owners, while debits are restricted to assistants. A new payment updates the user's wallet balance and transactions.
 
@@ -446,9 +446,9 @@ Create a history log entry.
 - `entity_type` – type name (required)
 - `entity_id` – entity id (required)
 - `action` – short action description (required)
-- `changed_by_user_id` – id of the user who made the change (required)
 - `timestamp` – datetime string (required)
 - `data_snapshot` – JSON data representing the entity state (required)
+The `changed_by_user_id` value is taken from the authenticated token.
 
 ### `DELETE /api/history/{id}`
 Delete a history log entry.

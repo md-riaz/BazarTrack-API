@@ -131,7 +131,7 @@ class OrderItemController {
     private function createItem()
     {
         $data = json_decode(file_get_contents('php://input'), true);
-        $required = ['order_id', 'product_name', 'quantity', 'status', 'user_id'];
+        $required = ['order_id', 'product_name', 'quantity', 'status'];
         foreach ($required as $field) {
             if (empty($data[$field])) {
                 ResponseHelper::error(400, "$field is required.");
@@ -139,7 +139,7 @@ class OrderItemController {
             }
         }
 
-        if (!Validator::validateInt($data['order_id']) || !Validator::validateInt($data['user_id']) || !Validator::validateFloat($data['quantity'])) {
+        if (!Validator::validateInt($data['order_id']) || !Validator::validateFloat($data['quantity'])) {
             ResponseHelper::error(400, 'Invalid input format.');
             return;
         }
@@ -151,8 +151,8 @@ class OrderItemController {
         }
 
         $guard = new RoleGuard();
-        if (!$guard->checkRole($data['user_id'], ['owner'])) {
-            ResponseHelper::error(403, 'Only owners can add items.'); 
+        if (!$guard->checkRole(AuthMiddleware::$userId, ['owner'])) {
+            ResponseHelper::error(403, 'Only owners can add items.');
             return;
         }
         $this->item->order_id = $data['order_id'];
@@ -163,7 +163,7 @@ class OrderItemController {
         $this->item->actual_cost = $data['actual_cost'] ?? null;
         $this->item->status = $data['status'];
         if ($this->item->create()) {
-            $this->logAction('order_item', $this->item->id, 'create', (int)$data['user_id'], $data);
+            $this->logAction('order_item', $this->item->id, 'create', AuthMiddleware::$userId, $data);
             http_response_code(201);
             echo json_encode([
                 'id' => $this->item->id,
@@ -187,7 +187,7 @@ class OrderItemController {
             return;
         }
         $data = json_decode(file_get_contents('php://input'), true);
-        $required = ['product_name', 'quantity', 'status', 'user_id'];
+        $required = ['product_name', 'quantity', 'status'];
         foreach ($required as $field) {
             if (empty($data[$field])) {
                 ResponseHelper::error(400, "$field is required.");
@@ -195,7 +195,7 @@ class OrderItemController {
             }
         }
 
-        if (!Validator::validateInt($data['user_id']) || !Validator::validateFloat($data['quantity'])) {
+        if (!Validator::validateFloat($data['quantity'])) {
             ResponseHelper::error(400, 'Invalid input format.');
             return;
         }
@@ -207,7 +207,7 @@ class OrderItemController {
         }
 
         $guard = new RoleGuard();
-        if (!$guard->checkRole($data['user_id'], ['assistant', 'owner'])) {
+        if (!$guard->checkRole(AuthMiddleware::$userId, ['assistant', 'owner'])) {
             ResponseHelper::error(403, 'Permission denied.');
             return;
         }
@@ -222,10 +222,10 @@ class OrderItemController {
         $this->item->status = $data['status'];
         if ($this->item->update()) {
             if (!empty($data['actual_cost'])) {
-                $wallet->updateBalance($data['user_id'], -$data['actual_cost']);
-                $wallet->addTransaction($data['user_id'], $data['actual_cost'], 'debit', date('Y-m-d H:i:s'));
+                $wallet->updateBalance(AuthMiddleware::$userId, -$data['actual_cost']);
+                $wallet->addTransaction(AuthMiddleware::$userId, $data['actual_cost'], 'debit', date('Y-m-d H:i:s'));
             }
-            $this->logAction('order_item', $id, 'update', (int)$data['user_id'], $data);
+            $this->logAction('order_item', $id, 'update', AuthMiddleware::$userId, $data);
             echo json_encode([
                 'id' => $this->item->id,
                 'order_id' => $this->item->order_id,
@@ -248,24 +248,15 @@ class OrderItemController {
             return;
         }
         $data = json_decode(file_get_contents('php://input'), true);
-        if (empty($data['user_id'])) {
-            ResponseHelper::error(400, 'user_id is required.');
-            return;
-        }
-
-        if (!Validator::validateInt($data['user_id'])) {
-            ResponseHelper::error(400, 'Invalid user_id.');
-            return;
-        }
         $guard = new RoleGuard();
-        if (!$guard->checkRole($data['user_id'], ['owner'])) {
+        if (!$guard->checkRole(AuthMiddleware::$userId, ['owner'])) {
             ResponseHelper::error(403, 'Only owners can delete items.');
             return;
         }
         $this->item->id = $id;
         if ($this->item->delete()) {
-            $this->logAction('order_item', $id, 'delete', (int)$data['user_id'], $data);
-            echo json_encode(["message" => "Item deleted."]); 
+            $this->logAction('order_item', $id, 'delete', AuthMiddleware::$userId, $data);
+            echo json_encode(["message" => "Item deleted."]);
         } else {
             ResponseHelper::error(500, 'Unable to delete item.');
         }
