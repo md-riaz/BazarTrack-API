@@ -15,3 +15,7 @@ if (file_exists($envFile)) {
         }
     }
 }
+
+// Set timezone and provide global timestamp constant
+date_default_timezone_set($_ENV['TIMEZONE'] ?? 'Asia/Dhaka');
+define('TIMESTAMP', date('Y-m-d H:i:s'));

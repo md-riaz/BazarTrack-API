@@ -40,7 +40,7 @@ class AuthController {
                 $token = new Token($this->db);
                 $token->user_id = $row['id'];
                 $token->token = $tokenValue;
-                $token->created_at = date('Y-m-d H:i:s');
+                $token->created_at = TIMESTAMP;
                 $token->create();
                 echo json_encode([
                     'token' => $tokenValue,
@@ -94,7 +94,7 @@ class AuthController {
         $newValue = bin2hex(random_bytes(16));
         $token->user_id = $userId;
         $token->token = $newValue;
-        $token->created_at = date('Y-m-d H:i:s');
+        $token->created_at = TIMESTAMP;
         $token->create();
 
         echo json_encode(['token' => $newValue]);

@@ -223,7 +223,7 @@ class OrderItemController {
         if ($this->item->update()) {
             if (!empty($data['actual_cost'])) {
                 $wallet->updateBalance(AuthMiddleware::$userId, -$data['actual_cost']);
-                $wallet->addTransaction(AuthMiddleware::$userId, $data['actual_cost'], 'debit', date('Y-m-d H:i:s'));
+                $wallet->addTransaction(AuthMiddleware::$userId, $data['actual_cost'], 'debit', TIMESTAMP);
             }
             $this->logAction('order_item', $id, 'update', AuthMiddleware::$userId, $data);
             echo json_encode([

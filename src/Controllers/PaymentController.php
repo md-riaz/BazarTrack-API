@@ -61,7 +61,7 @@ class PaymentController {
     private function createPayment()
     {
         $data = json_decode(file_get_contents('php://input'), true);
-        $required = ['user_id', 'amount', 'type', 'created_at'];
+        $required = ['user_id', 'amount', 'type'];
         foreach ($required as $field) {
             if (empty($data[$field])) {
                 ResponseHelper::error(400, "$field is required.");
@@ -70,8 +70,7 @@ class PaymentController {
         }
 
         if (!Validator::validateInt($data['user_id']) ||
-            !Validator::validateFloat($data['amount']) ||
-            !Validator::validateDate($data['created_at'])) {
+            !Validator::validateFloat($data['amount'])) {
             ResponseHelper::error(400, 'Invalid data format.');
             return;
         }
@@ -96,12 +95,12 @@ class PaymentController {
         $this->payment->user_id = $data['user_id'];
         $this->payment->amount = $data['amount'];
         $this->payment->type = $data['type'];
-        $this->payment->created_at = $data['created_at'];
+        $this->payment->created_at = TIMESTAMP;
 
         if ($this->payment->create()) {
             $amount = $data['type'] === 'credit' ? $data['amount'] : -$data['amount'];
             $wallet->updateBalance($data['user_id'], $amount);
-            $wallet->addTransaction($data['user_id'], $data['amount'], $data['type'], $data['created_at']);
+            $wallet->addTransaction($data['user_id'], $data['amount'], $data['type'], TIMESTAMP);
             $this->logAction('payment', $this->payment->id, 'create', AuthMiddleware::$userId, $data);
             http_response_code(201);
             echo json_encode([
