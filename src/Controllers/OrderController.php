@@ -111,15 +111,13 @@ class OrderController {
 
     private function createOrder() {
         $data = json_decode(file_get_contents("php://input"), true);
-        if (empty($data['status']) || empty($data['created_at'])) {
-            ResponseHelper::error(400, 'status and created_at are required.');
+        if (empty($data['status'])) {
+            ResponseHelper::error(400, 'status is required.');
             return;
         }
 
         if (
-            (isset($data['assigned_to']) && $data['assigned_to'] !== null && !Validator::validateInt($data['assigned_to'])) ||
-            !Validator::validateDate($data['created_at']) ||
-            (isset($data['completed_at']) && $data['completed_at'] !== null && !Validator::validateDate($data['completed_at']))
+            (isset($data['assigned_to']) && $data['assigned_to'] !== null && !Validator::validateInt($data['assigned_to']))
         ) {
             ResponseHelper::error(400, 'Invalid input format.');
             return;
@@ -132,8 +130,8 @@ class OrderController {
         $this->order->created_by = AuthMiddleware::$userId;
         $this->order->assigned_to = $data['assigned_to'] ?? null;
         $this->order->status = $data['status'];
-        $this->order->created_at = $data['created_at'];
-        $this->order->completed_at = $data['completed_at'] ?? null;
+        $this->order->created_at = TIMESTAMP;
+        $this->order->completed_at = null;
         if ($this->order->create()) {
             $this->logAction('order', $this->order->id, 'create', AuthMiddleware::$userId, $data);
             http_response_code(201);
@@ -161,8 +159,7 @@ class OrderController {
             return;
         }
 
-        if ((isset($data['assigned_to']) && $data['assigned_to'] !== null && !Validator::validateInt($data['assigned_to'])) ||
-            (isset($data['completed_at']) && $data['completed_at'] !== null && !Validator::validateDate($data['completed_at']))) {
+        if ((isset($data['assigned_to']) && $data['assigned_to'] !== null && !Validator::validateInt($data['assigned_to']))) {
             ResponseHelper::error(400, 'Invalid input format.');
             return;
         }
@@ -170,7 +167,7 @@ class OrderController {
         $this->order->id = $id;
         $this->order->assigned_to = $data['assigned_to'] ?? null;
         $this->order->status = $data['status'];
-        $this->order->completed_at = $data['completed_at'] ?? null;
+        $this->order->completed_at = $data['status'] === 'completed' ? TIMESTAMP : null;
         if ($this->order->update()) {
             echo json_encode([
                 'id' => $this->order->id,
@@ -246,10 +243,6 @@ class OrderController {
             return;
         }
         $data = json_decode(file_get_contents('php://input'), true);
-        if (isset($data['completed_at']) && $data['completed_at'] !== null && !Validator::validateDate($data['completed_at'])) {
-            ResponseHelper::error(400, 'Invalid input format.');
-            return;
-        }
         $guard = new RoleGuard();
         if (!$guard->checkRole(AuthMiddleware::$userId, ['assistant'])) {
             ResponseHelper::error(403, 'Only assistants can complete orders.');
@@ -258,7 +251,7 @@ class OrderController {
         $this->order->id = $id;
         $this->order->assigned_to = AuthMiddleware::$userId;
         $this->order->status = 'completed';
-        $this->order->completed_at = $data['completed_at'] ?? null;
+        $this->order->completed_at = TIMESTAMP;
         if ($this->order->update()) {
             $this->logAction('order', $id, 'complete', AuthMiddleware::$userId, $data);
             echo json_encode(["message" => "Order marked as completed."]);

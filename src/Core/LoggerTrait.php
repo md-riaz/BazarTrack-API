@@ -15,7 +15,7 @@ trait LoggerTrait
         $log->entity_id = $entityId;
         $log->action = $action;
         $log->changed_by_user_id = $userId;
-        $log->timestamp = date('Y-m-d H:i:s');
+        $log->timestamp = TIMESTAMP;
         $log->data_snapshot = $snapshot;
         $log->create();
     }
