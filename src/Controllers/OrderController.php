@@ -5,6 +5,7 @@ namespace App\Controllers;
 
 use App\Core\Database;
 use App\Models\Order;
+use App\Models\OrderItem;
 use PDO;
 use App\Core\RoleGuard;
 use App\Core\LoggerTrait;
@@ -127,12 +128,63 @@ class OrderController {
             ResponseHelper::error(403, 'Only owners can create orders.');
             return;
         }
+
+        $items = $data['items'] ?? [];
+
         $this->order->created_by = AuthMiddleware::$userId;
         $this->order->assigned_to = $data['assigned_to'] ?? null;
         $this->order->status = $data['status'];
         $this->order->created_at = TIMESTAMP;
         $this->order->completed_at = null;
-        if ($this->order->create()) {
+
+        $createdItems = [];
+        $this->db->beginTransaction();
+        try {
+            if (!$this->order->create()) {
+                throw new \Exception('Unable to create order.', 500);
+            }
+
+            if (is_array($items)) {
+                $itemModel = new OrderItem($this->db);
+                foreach ($items as $item) {
+                    foreach (['product_name', 'quantity', 'status'] as $field) {
+                        if (empty($item[$field])) {
+                            throw new \Exception("$field is required for each item.", 400);
+                        }
+                    }
+                    if (!Validator::validateFloat($item['quantity'])) {
+                        throw new \Exception('Invalid item quantity.', 400);
+                    }
+                    if ((isset($item['estimated_cost']) && $item['estimated_cost'] !== null && !Validator::validateFloat($item['estimated_cost'])) ||
+                        (isset($item['actual_cost']) && $item['actual_cost'] !== null && !Validator::validateFloat($item['actual_cost']))) {
+                        throw new \Exception('Invalid item cost format.', 400);
+                    }
+
+                    $itemModel->order_id = $this->order->id;
+                    $itemModel->product_name = $item['product_name'];
+                    $itemModel->quantity = $item['quantity'];
+                    $itemModel->unit = $item['unit'] ?? '';
+                    $itemModel->estimated_cost = $item['estimated_cost'] ?? null;
+                    $itemModel->actual_cost = $item['actual_cost'] ?? null;
+                    $itemModel->status = $item['status'];
+                    if (!$itemModel->create()) {
+                        throw new \Exception('Unable to create order item.', 500);
+                    }
+                    $this->logAction('order_item', $itemModel->id, 'create', AuthMiddleware::$userId, $item);
+                    $createdItems[] = [
+                        'id' => $itemModel->id,
+                        'order_id' => $this->order->id,
+                        'product_name' => $itemModel->product_name,
+                        'quantity' => $itemModel->quantity,
+                        'unit' => $itemModel->unit,
+                        'estimated_cost' => $itemModel->estimated_cost,
+                        'actual_cost' => $itemModel->actual_cost,
+                        'status' => $itemModel->status,
+                    ];
+                }
+            }
+
+            $this->db->commit();
             $this->logAction('order', $this->order->id, 'create', AuthMiddleware::$userId, $data);
             http_response_code(201);
             echo json_encode([
@@ -142,9 +194,15 @@ class OrderController {
                 'status' => $this->order->status,
                 'created_at' => $this->order->created_at,
                 'completed_at' => $this->order->completed_at,
+                'items' => $createdItems,
             ]);
-        } else {
-            ResponseHelper::error(500, 'Unable to create order.');
+        } catch (\Exception $e) {
+            $this->db->rollBack();
+            $status = $e->getCode() ?: 500;
+            if ($status < 100) {
+                $status = 500;
+            }
+            ResponseHelper::error($status, $e->getMessage());
         }
     }
 
