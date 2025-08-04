@@ -40,11 +40,15 @@ class Order {
         $query = "INSERT INTO " . $this->table_name . " SET created_by = :created_by, assigned_to = :assigned_to, status = :status, created_at = :created_at";
         $stmt = $this->conn->prepare($query);
         $this->created_by = htmlspecialchars(strip_tags($this->created_by));
-        $this->assigned_to = htmlspecialchars(strip_tags($this->assigned_to));
         $this->status = htmlspecialchars(strip_tags($this->status));
         $this->created_at = htmlspecialchars(strip_tags($this->created_at));
-        $stmt->bindParam(':created_by', $this->created_by);
-        $stmt->bindParam(':assigned_to', $this->assigned_to);
+        $stmt->bindValue(':created_by', $this->created_by, PDO::PARAM_INT);
+        if ($this->assigned_to !== null) {
+            $this->assigned_to = htmlspecialchars(strip_tags($this->assigned_to));
+            $stmt->bindValue(':assigned_to', $this->assigned_to, PDO::PARAM_INT);
+        } else {
+            $stmt->bindValue(':assigned_to', null, PDO::PARAM_NULL);
+        }
         $stmt->bindParam(':status', $this->status);
         $stmt->bindParam(':created_at', $this->created_at);
         if ($stmt->execute()) {
@@ -57,14 +61,18 @@ class Order {
     public function update() {
         $query = "UPDATE " . $this->table_name . " SET assigned_to = :assigned_to, status = :status, completed_at = :completed_at WHERE id = :id";
         $stmt = $this->conn->prepare($query);
-        $this->assigned_to = htmlspecialchars(strip_tags($this->assigned_to));
+        if ($this->assigned_to !== null) {
+            $this->assigned_to = htmlspecialchars(strip_tags($this->assigned_to));
+            $stmt->bindValue(':assigned_to', $this->assigned_to, PDO::PARAM_INT);
+        } else {
+            $stmt->bindValue(':assigned_to', null, PDO::PARAM_NULL);
+        }
         $this->status = htmlspecialchars(strip_tags($this->status));
         $this->completed_at = htmlspecialchars(strip_tags($this->completed_at));
         $this->id = htmlspecialchars(strip_tags($this->id));
-        $stmt->bindParam(':assigned_to', $this->assigned_to);
         $stmt->bindParam(':status', $this->status);
         $stmt->bindParam(':completed_at', $this->completed_at);
-        $stmt->bindParam(':id', $this->id);
+        $stmt->bindParam(':id', $this->id, PDO::PARAM_INT);
         if ($stmt->execute()) {
             return true;
         }
