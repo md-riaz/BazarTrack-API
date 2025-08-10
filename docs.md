@@ -2,6 +2,32 @@
 
 This document describes the available HTTP endpoints for the BazarTrack API. All responses are JSON encoded.
 
+## Workflow guide
+
+The API supports an owner–assistant purchasing workflow. The list below shows how common UI elements map to HTTP endpoints.
+
+### Owner dashboard
+- **Stats (total, assigned, in progress, completed)** – `GET /api/analytics/dashboard` returns aggregated counts, and `GET /api/orders` lists all orders for client-side filtering.
+- **Assistant wallet summary & advance history** – `GET /api/wallet/{assistant_id}` for current balance and `GET /api/wallet/{assistant_id}/transactions` for advances and expenses.
+- **Order activity timeline** – `GET /api/history/order/{order_id}` shows a chronological log for a specific order.
+
+### Assistant dashboard
+- **Assigned orders** – `GET /api/orders` with client-side filtering by `assigned_to` or `status`.
+- **Wallet balance** – `GET /api/wallet/{assistant_id}`.
+
+### Purchase entry / order detail
+- **Update item status and costs** – `PUT /api/order_items/{order_id}/{item_id}`.
+- **Record expenses or advances** – `POST /api/payments` with `type` set to `debit` or `credit`.
+- **Timeline and action log** – actions are stored via `POST /api/history` and retrievable with `GET /api/history/order/{order_id}`.
+
+### Example flow
+1. Owner creates an order – `POST /api/orders`.
+2. Owner optionally gives an advance – `POST /api/payments` (`credit`).
+3. Assistant self-assigns or is assigned – `POST /api/orders/{id}/assign`.
+4. Assistant updates item costs – `PUT /api/order_items/{order_id}/{item_id}` and logs expenses with `POST /api/payments` (`debit`).
+5. System logs each action – `POST /api/history`.
+6. Owner reviews the timeline – `GET /api/history/order/{id}`.
+
 Error responses share a common structure:
 ```json
 { "error": "<message>" }
