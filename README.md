@@ -124,6 +124,33 @@ Endpoints annotated with **(🔒 requires token)** need this header.
 - `GET /api/analytics/dashboard` – basic dashboard statistics. **(🔒 requires token)**
 - `GET /api/analytics/reports` – monthly reports. **(🔒 requires token)**
 
+## Example workflow
+
+The sequence below shows how the API endpoints support a typical owner/assistant
+scenario:
+
+1. **Owner creates an order**
+   - `POST /api/orders` with an `items` array to list products.
+   - Optionally assign immediately using `POST /api/orders/{id}/assign`.
+
+2. **Owner provides advance to the assistant**
+   - `POST /api/payments` with `type` set to `credit` to add funds to the assistant’s wallet.
+   - Wallet balance and past advances are available via `GET /api/wallet/{user_id}` and
+     `GET /api/wallet/{user_id}/transactions`.
+
+3. **Assistant claims or receives the order**
+   - Assistants may self-assign using `POST /api/orders/{id}/assign` or be assigned by an owner.
+   - Assigned orders are retrieved with `GET /api/orders`.
+
+4. **Assistant records purchases**
+   - Update each item with actual costs using `PUT /api/order_items/{order_id}/{id}`.
+   - Each update debits the assistant wallet automatically.
+
+5. **Completion and auditing**
+   - When work is done, call `POST /api/orders/{id}/complete`.
+   - Activity timelines are available from `GET /api/history/order/{id}`.
+   - Owners can view overall statistics using `GET /api/analytics/dashboard`.
+
 Responses are returned in JSON format. Endpoints marked with **(🔒 requires token)** must include the `Authorization` header shown above.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on contributing to this project.
