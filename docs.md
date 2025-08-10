@@ -20,6 +20,23 @@ The API supports an owner–assistant purchasing workflow. The list below shows 
 - **Record expenses or advances** – `POST /api/payments` with `type` set to `debit` or `credit`.
 - **Timeline and action log** – actions are stored via `POST /api/history` and retrievable with `GET /api/history/order/{order_id}`.
 
+### Order Management
+- **Create order** – Owner makes a new order and can submit initial line items in the same request using POST /api/orders
+- **Add or edit items later** – Additional line items can be added with POST /api/order_items, and both owners and assistants may update an item (including costs and status) via PUT /api/order_items/{order_id}/{id}
+- **Assign orders** – Owners may assign orders to an assistant, while assistants can self‑assign using POST /api/orders/{id}/assign
+
+### Wallet & Payments
+- **Advance/expense entries** – A payment entry (credit or debit) is recorded through POST /api/payments; credits (advances) are created by owners, while debits are typically recorded when assistants update an item with an actual cost
+- **Wallet state** – Retrieve a user’s wallet balance and transaction history with GET /api/wallet/{user_id} and GET /api/wallet/{user_id}/transactions
+- **Automatic deductions** – When an assistant supplies actual_cost for an item via PUT /api/order_items/{order_id}/{id}, that amount is automatically debited from the assistant’s wallet
+
+### Activity Timeline & Logging
+- **History logging** – Any action (order creation, item updates, assignments, etc.) can be recorded via POST /api/history, and individual entity timelines are retrieved with GET /api/history/{entity}/{id}
+- These endpoints allow building the “Order Activity Timeline” and “Action Log” views you described.
+
+### Dashboards & Analytics
+- **Owner Dashboard stats** – Overall counts and revenue figures come from GET /api/analytics/dashboard; monthly breakdowns are available via GET /api/analytics/reports
+
 ### Example flow
 1. Owner creates an order – `POST /api/orders`.
 2. Owner optionally gives an advance – `POST /api/payments` (`credit`).
