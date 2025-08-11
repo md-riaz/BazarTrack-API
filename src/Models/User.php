@@ -25,6 +25,18 @@ class User {
         return $stmt;
     }
 
+    public function readAssistants(bool $includeBalance = false)
+    {
+        if ($includeBalance) {
+            $query = "SELECT u.id, u.name, COALESCE(w.balance, 0) AS balance FROM {$this->table_name} u LEFT JOIN wallets w ON u.id = w.user_id WHERE u.role = 'assistant'";
+        } else {
+            $query = "SELECT id, name FROM {$this->table_name} WHERE role = 'assistant'";
+        }
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt;
+    }
+
     public function readOne() {
         $query = "SELECT id, name, email, role FROM " . $this->table_name . " WHERE id = ? LIMIT 1";
         $stmt = $this->conn->prepare($query);

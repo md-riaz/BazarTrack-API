@@ -574,6 +574,35 @@ Return monthly order counts and revenue totals.
 ]
 ```
 
+## Assistants
+
+### `GET /api/assistants`
+List assistant users.
+
+**Query parameters**
+- `with_balance` – if `true`, include current wallet balances.
+
+**Response**
+```json
+[
+  {
+    "id": 2,
+    "name": "Assistant Jane"
+  }
+]
+```
+
+**Response with balance**
+```json
+[
+  {
+    "id": 2,
+    "name": "Assistant Jane",
+    "balance": 150.0
+  }
+]
+```
+
 ---
 
 All timestamps follow the `YYYY-MM-DD HH:MM:SS` format and are generated using the `Asia/Dhaka` timezone. Endpoints may return standard HTTP error codes for validation or authorization failures. Error bodies follow the structure shown above.
