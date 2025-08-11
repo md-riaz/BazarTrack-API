@@ -16,6 +16,7 @@ use App\Controllers\HistoryLogController;
 use App\Controllers\PaymentController;
 use App\Controllers\WalletController;
 use App\Controllers\AnalyticsController;
+use App\Controllers\AssistantController;
 use App\Core\ResponseHelper;
 
 $allowedOrigin = $_ENV['ALLOWED_ORIGIN'];
@@ -149,6 +150,12 @@ switch ($resource) {
             } else {
                 ResponseHelper::error(404, 'Endpoint not found.');
             }
+            break;
+        }
+        // /api/assistants
+        if ($second === 'assistants') {
+            $assistantController = new AssistantController();
+            $assistantController->processRequest($method);
             break;
         }
         // Fallback
