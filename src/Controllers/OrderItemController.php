@@ -79,7 +79,7 @@ class OrderItemController {
                 'status' => $row['status'],
             ];
         }
-        echo json_encode($items_arr);
+        ResponseHelper::success('Order items retrieved successfully', $items_arr);
     }
 
     private function getItemsByOrder($orderId) {
@@ -102,7 +102,7 @@ class OrderItemController {
                 'status' => $row['status'],
             ];
         }
-        echo json_encode($items_arr);
+        ResponseHelper::success('Order items retrieved successfully', $items_arr);
     }
 
     private function getItem($id) {
@@ -114,7 +114,7 @@ class OrderItemController {
         $stmt = $this->item->readOne();
         if ($stmt->rowCount() === 1) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            echo json_encode([
+            ResponseHelper::success('Order item retrieved successfully', [
                 'id' => $row['id'],
                 'order_id' => $row['order_id'],
                 'product_name' => $row['product_name'],
@@ -165,8 +165,7 @@ class OrderItemController {
         $this->item->status = $data['status'];
         if ($this->item->create()) {
             $this->logAction('order_item', $this->item->id, 'create', AuthMiddleware::$userId, $data);
-            http_response_code(201);
-            echo json_encode([
+            ResponseHelper::success('Order item created successfully', [
                 'id' => $this->item->id,
                 'order_id' => $this->item->order_id,
                 'product_name' => $this->item->product_name,
@@ -175,7 +174,7 @@ class OrderItemController {
                 'estimated_cost' => $this->item->estimated_cost,
                 'actual_cost' => $this->item->actual_cost,
                 'status' => $this->item->status,
-            ]);
+            ], 201);
         } else {
             ResponseHelper::error(500, 'Unable to create item.');
         }
@@ -264,7 +263,7 @@ class OrderItemController {
                 'reason' => $reason,
             ];
             $this->logAction('order_item', $id, 'update', AuthMiddleware::$userId, $snapshot);
-            echo json_encode([
+            ResponseHelper::success('Order item updated successfully', [
                 'id' => $this->item->id,
                 'order_id' => $this->item->order_id,
                 'product_name' => $this->item->product_name,
@@ -294,7 +293,7 @@ class OrderItemController {
         $this->item->id = $id;
         if ($this->item->delete()) {
             $this->logAction('order_item', $id, 'delete', AuthMiddleware::$userId, $data);
-            echo json_encode(["message" => "Item deleted."]);
+            ResponseHelper::success('Item deleted successfully');
         } else {
             ResponseHelper::error(500, 'Unable to delete item.');
         }

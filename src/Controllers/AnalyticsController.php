@@ -31,7 +31,7 @@ class AnalyticsController {
         $stmt = $this->db->query("SELECT COALESCE(SUM(amount),0) AS total FROM payments");
         $totalRevenue = (float)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-        echo json_encode([
+        ResponseHelper::success('Dashboard analytics retrieved successfully', [
             'total_users' => $totalUsers,
             'total_orders' => $totalOrders,
             'total_payments' => $totalPayments,
@@ -55,7 +55,7 @@ class AnalyticsController {
         );
         $revenueByMonth = $revenueStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        echo json_encode([
+        ResponseHelper::success('Monthly reports retrieved successfully', [
             'orders_by_month' => $ordersByMonth,
             'revenue_by_month' => $revenueByMonth
         ]);

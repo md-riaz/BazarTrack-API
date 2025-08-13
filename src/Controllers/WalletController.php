@@ -51,7 +51,7 @@ class WalletController {
         $stmt = $this->wallet->getBalance($user_id);
         if ($stmt->rowCount() === 1) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            echo json_encode(["user_id" => $user_id, "balance" => $row['balance']]);
+            ResponseHelper::success('Wallet balance retrieved successfully', ["user_id" => $user_id, "balance" => $row['balance']]);
         } else {
             ResponseHelper::error(404, 'Wallet not found.');
         }
@@ -79,6 +79,6 @@ class WalletController {
                 'created_at' => $row['created_at'],
             ];
         }
-        echo json_encode($transactions_arr);
+        ResponseHelper::success('Wallet transactions retrieved successfully', $transactions_arr);
     }
 }
