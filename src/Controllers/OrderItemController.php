@@ -186,22 +186,28 @@ class OrderItemController {
             ResponseHelper::error(400, 'Invalid item ID.');
             return;
         }
+
         $data = json_decode(file_get_contents('php://input'), true);
-        $required = ['product_name', 'quantity', 'status'];
-        foreach ($required as $field) {
-            if (empty($data[$field])) {
-                ResponseHelper::error(400, "$field is required.");
-                return;
-            }
+        if (!is_array($data) || empty($data)) {
+            ResponseHelper::error(400, 'No data provided.');
+            return;
         }
 
-        if (!Validator::validateFloat($data['quantity'])) {
+        $this->item->id = $id;
+        $currentStmt = $this->item->readOne();
+        if ($currentStmt->rowCount() !== 1) {
+            ResponseHelper::error(404, 'Item not found.');
+            return;
+        }
+        $current = $currentStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (isset($data['quantity']) && !Validator::validateFloat($data['quantity'])) {
             ResponseHelper::error(400, 'Invalid input format.');
             return;
         }
 
-        if ((isset($data['estimated_cost']) && $data['estimated_cost'] !== null && !Validator::validateFloat($data['estimated_cost'])) ||
-            (isset($data['actual_cost']) && $data['actual_cost'] !== null && !Validator::validateFloat($data['actual_cost']))) {
+        if ((array_key_exists('estimated_cost', $data) && $data['estimated_cost'] !== null && !Validator::validateFloat($data['estimated_cost'])) ||
+            (array_key_exists('actual_cost', $data) && $data['actual_cost'] !== null && !Validator::validateFloat($data['actual_cost']))) {
             ResponseHelper::error(400, 'Invalid cost format.');
             return;
         }
@@ -213,15 +219,17 @@ class OrderItemController {
         }
 
         $wallet = new Wallet($this->db);
-        $this->item->id = $id;
-        $this->item->product_name = $data['product_name'];
-        $this->item->quantity = $data['quantity'];
-        $this->item->unit = $data['unit'] ?? '';
-        $this->item->estimated_cost = $data['estimated_cost'] ?? null;
-        $this->item->actual_cost = $data['actual_cost'] ?? null;
-        $this->item->status = $data['status'];
+
+        $this->item->order_id = $current['order_id'];
+        $this->item->product_name = $data['product_name'] ?? $current['product_name'];
+        $this->item->quantity = $data['quantity'] ?? $current['quantity'];
+        $this->item->unit = $data['unit'] ?? $current['unit'];
+        $this->item->estimated_cost = array_key_exists('estimated_cost', $data) ? $data['estimated_cost'] : $current['estimated_cost'];
+        $this->item->actual_cost = array_key_exists('actual_cost', $data) ? $data['actual_cost'] : $current['actual_cost'];
+        $this->item->status = $data['status'] ?? $current['status'];
+
         if ($this->item->update()) {
-            if (!empty($data['actual_cost'])) {
+            if (array_key_exists('actual_cost', $data) && $data['actual_cost'] !== null) {
                 $wallet->updateBalance(AuthMiddleware::$userId, -$data['actual_cost']);
                 $wallet->addTransaction(AuthMiddleware::$userId, $data['actual_cost'], 'debit', TIMESTAMP);
             }
