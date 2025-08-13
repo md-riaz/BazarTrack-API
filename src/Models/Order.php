@@ -68,10 +68,14 @@ class Order {
             $stmt->bindValue(':assigned_to', null, PDO::PARAM_NULL);
         }
         $this->status = htmlspecialchars(strip_tags($this->status));
-        $this->completed_at = htmlspecialchars(strip_tags($this->completed_at));
         $this->id = htmlspecialchars(strip_tags($this->id));
         $stmt->bindParam(':status', $this->status);
-        $stmt->bindParam(':completed_at', $this->completed_at);
+        if ($this->completed_at !== null) {
+            $this->completed_at = htmlspecialchars(strip_tags($this->completed_at));
+            $stmt->bindValue(':completed_at', $this->completed_at);
+        } else {
+            $stmt->bindValue(':completed_at', null, PDO::PARAM_NULL);
+        }
         $stmt->bindParam(':id', $this->id, PDO::PARAM_INT);
         if ($stmt->execute()) {
             return true;

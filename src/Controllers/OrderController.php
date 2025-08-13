@@ -123,6 +123,13 @@ class OrderController {
             ResponseHelper::error(400, 'Invalid input format.');
             return;
         }
+        if (isset($data['assigned_to']) && $data['assigned_to'] !== null) {
+            $assigneeRole = $this->getUserRole((int)$data['assigned_to']);
+            if ($assigneeRole !== 'assistant') {
+                ResponseHelper::error(400, 'assigned_to must be an assistant.');
+                return;
+            }
+        }
         $guard = new RoleGuard();
         if (!$guard->checkRole(AuthMiddleware::$userId, ['owner'])) {
             ResponseHelper::error(403, 'Only owners can create orders.');
@@ -255,38 +262,65 @@ class OrderController {
     {
         if (!Validator::validateInt($id)) {
             ResponseHelper::error(400, 'Invalid order ID.');
-}
+            return;
+        }
         if (!AuthMiddleware::check()) {
             return;
         }
-        $data = json_decode(file_get_contents('php://input'), true);
-        if (empty($data['user_id'])) {
-            ResponseHelper::error(400, 'user_id is required.');
-            return;
-        }
 
-        if (!Validator::validateInt($data['user_id'])) {
-            ResponseHelper::error(400, 'Invalid user_id.');
-            return;
-        }
+        $data = json_decode(file_get_contents('php://input'), true) ?? [];
 
-        $guard = new RoleGuard();
-        $isSelf = (int)$data['user_id'] === AuthMiddleware::$userId;
-        if ($isSelf && !$guard->checkRole(AuthMiddleware::$userId, ['assistant'])) {
-            ResponseHelper::error(403, 'Only assistants can self-assign.');
-            return;
-        }
-        if (!$isSelf && !$guard->checkRole(AuthMiddleware::$userId, ['owner'])) {
-            ResponseHelper::error(403, 'Only owners can assign others.');
-            return;
-        }
+        $actorId = (int)AuthMiddleware::$userId;
+        $role = AuthMiddleware::$role;
 
         $this->order->id = $id;
-        $this->order->assigned_to = $data['user_id'];
+        $stmt = $this->order->readOne();
+        if ($stmt->rowCount() !== 1) {
+            ResponseHelper::error(404, 'Order not found.');
+            return;
+        }
+        $current = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($role === 'assistant') {
+            $targetId = isset($data['user_id']) ? (int)$data['user_id'] : $actorId;
+            if ($targetId !== $actorId) {
+                ResponseHelper::error(403, 'Assistants can only self-assign.');
+                return;
+            }
+            if (!empty($current['assigned_to']) && (int)$current['assigned_to'] !== $actorId) {
+                ResponseHelper::error(403, 'Order already assigned.');
+                return;
+            }
+        } elseif ($role === 'owner') {
+            if (!isset($data['user_id'])) {
+                ResponseHelper::error(400, 'user_id is required.');
+                return;
+            }
+            $targetId = (int)$data['user_id'];
+            if (!Validator::validateInt($targetId)) {
+                ResponseHelper::error(400, 'Invalid user_id.');
+                return;
+            }
+            $targetRole = $this->getUserRole($targetId);
+            if ($targetRole !== 'assistant') {
+                ResponseHelper::error(400, 'user_id must be an assistant.');
+                return;
+            }
+        } else {
+            ResponseHelper::error(403, 'Unauthorized.');
+            return;
+        }
+
+        $this->order->assigned_to = $targetId;
         $this->order->status = 'assigned';
+        $this->order->completed_at = $current['completed_at'];
         if ($this->order->update()) {
-            $this->logAction('order', $id, 'assign', AuthMiddleware::$userId, $data);
-            echo json_encode(["message" => "Order assigned."]);
+            $this->logAction('order', $id, 'assign', $actorId, ['user_id' => $targetId]);
+            echo json_encode([
+                'id' => $this->order->id,
+                'assigned_to' => $this->order->assigned_to,
+                'assigned_by' => $actorId,
+            ]);
         } else {
             ResponseHelper::error(500, 'Unable to assign order.');
         }
