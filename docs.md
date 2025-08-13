@@ -28,7 +28,7 @@ The API supports an owner–assistant purchasing workflow. The list below shows 
 ### Wallet & Payments
 - **Advance/expense entries** – A payment entry (credit or debit) is recorded through POST /api/payments; credits (advances) are created by owners, while debits are typically recorded when assistants update an item with an actual cost
 - **Wallet state** – Retrieve a user’s wallet balance and transaction history with GET /api/wallet/{user_id} and GET /api/wallet/{user_id}/transactions
-- **Automatic deductions** – When an assistant supplies actual_cost for an item via PUT /api/order_items/{order_id}/{id}, that amount is automatically debited from the assistant’s wallet
+- **Automatic adjustments** – When an assistant supplies actual_cost for an item via PUT /api/order_items/{order_id}/{id}, the wallet is adjusted by the difference from the previous actual_cost (debit if the cost increases, credit if it decreases) and a transaction is logged
 
 ### Activity Timeline & Logging
 - **History logging** – Any action (order creation, item updates, assignments, etc.) can be recorded via POST /api/history, and individual entity timelines are retrieved with GET /api/history/{entity}/{id}
@@ -372,7 +372,7 @@ Update an order item. Assistants and owners may update items.
 - `status` – item status (required)
 The user performing the update is inferred from the authenticated token.
 
-If `actual_cost` is supplied, the amount is debited from the user's wallet.
+If `actual_cost` is supplied, the wallet is adjusted by the difference from the previous value and a transaction is recorded for the difference.
 
 ### `DELETE /api/order_items/{order_id}/{id}`
 Delete an order item. Only owners can delete items.

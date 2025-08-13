@@ -228,10 +228,18 @@ class OrderItemController {
         $this->item->actual_cost = array_key_exists('actual_cost', $data) ? $data['actual_cost'] : $current['actual_cost'];
         $this->item->status = $data['status'] ?? $current['status'];
 
+        $diff = 0;
+        if (array_key_exists('actual_cost', $data) && $data['actual_cost'] !== null) {
+            $newActual = $data['actual_cost'];
+            $oldActual = $current['actual_cost'] ?? 0;
+            $diff = $newActual - $oldActual;
+        }
+
         if ($this->item->update()) {
-            if (array_key_exists('actual_cost', $data) && $data['actual_cost'] !== null) {
-                $wallet->updateBalance(AuthMiddleware::$userId, -$data['actual_cost']);
-                $wallet->addTransaction(AuthMiddleware::$userId, $data['actual_cost'], 'debit', TIMESTAMP);
+            if ($diff != 0) {
+                $wallet->updateBalance(AuthMiddleware::$userId, -$diff);
+                $type = $diff > 0 ? 'debit' : 'credit';
+                $wallet->addTransaction(AuthMiddleware::$userId, abs($diff), $type, TIMESTAMP);
             }
             $this->logAction('order_item', $id, 'update', AuthMiddleware::$userId, $data);
             echo json_encode([
