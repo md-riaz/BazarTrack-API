@@ -54,7 +54,7 @@ class UserController {
                 'role' => $row['role'],
             ];
         }
-        echo json_encode($users_arr);
+        ResponseHelper::success('Users retrieved successfully', $users_arr);
     }
 
     private function getUser($id) {
@@ -66,7 +66,7 @@ class UserController {
         $stmt = $this->user->readOne();
         if ($stmt->rowCount() === 1) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            echo json_encode([
+            ResponseHelper::success('User retrieved successfully', [
                 'id' => $row['id'],
                 'name' => $row['name'],
                 'email' => $row['email'],
@@ -86,12 +86,11 @@ class UserController {
         $this->user->name = $data['name'];
         $this->user->email = $data['email'];
         if ($this->user->create()) {
-            http_response_code(201);
-            echo json_encode([
+            ResponseHelper::success('User created successfully', [
                 'id' => $this->user->id,
                 'name' => $this->user->name,
                 'email' => $this->user->email,
-            ]);
+            ], 201);
         } else {
             ResponseHelper::error(500, 'Unable to create user.');
         }
@@ -107,7 +106,7 @@ class UserController {
         $this->user->name = $data['name'];
         $this->user->email = $data['email'];
         if ($this->user->update()) {
-            echo json_encode([
+            ResponseHelper::success('User updated successfully', [
                 'id' => $this->user->id,
                 'name' => $this->user->name,
                 'email' => $this->user->email,
@@ -120,7 +119,7 @@ class UserController {
     private function deleteUser($id) {
         $this->user->id = $id;
         if ($this->user->delete()) {
-            echo json_encode(["message" => "User deleted."]); 
+            ResponseHelper::success('User deleted successfully'); 
         } else {
             ResponseHelper::error(500, 'Unable to delete user.');
         }

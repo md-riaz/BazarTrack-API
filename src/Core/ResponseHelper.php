@@ -3,9 +3,23 @@ namespace App\Core;
 
 class ResponseHelper
 {
-    public static function error(int $status, string $message): void
+    public static function error(int $status, string $message, ?string $errorCode = null): void
     {
         http_response_code($status);
-        echo json_encode(['error' => $message]);
+        echo json_encode([
+            'error' => $errorCode ?? (string)$status,
+            'msg' => $message,
+            'data' => null
+        ]);
+    }
+
+    public static function success(string $message, $data = null, int $status = 200): void
+    {
+        http_response_code($status);
+        echo json_encode([
+            'error' => null,
+            'msg' => $message,
+            'data' => $data
+        ]);
     }
 }

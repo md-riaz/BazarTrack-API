@@ -16,12 +16,20 @@ class AuthMiddleware
 
         if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
             http_response_code(401);
-            echo json_encode(['message' => 'Unauthorized']);
+            echo json_encode([
+                'error' => '401',
+                'msg' => 'Invalid or missing authentication token',
+                'data' => null
+            ]);
             return false;
         }
         if (!preg_match('/Bearer\s+(.*)$/i', $_SERVER['HTTP_AUTHORIZATION'], $m)) {
             http_response_code(401);
-            echo json_encode(['message' => 'Unauthorized']);
+            echo json_encode([
+                'error' => '401',
+                'msg' => 'Invalid or missing authentication token',
+                'data' => null
+            ]);
             return false;
         }
         $token = $m[1];
@@ -38,7 +46,11 @@ class AuthMiddleware
             return true;
         }
         http_response_code(401);
-        echo json_encode(['message' => 'Unauthorized']);
+        echo json_encode([
+            'error' => '401',
+            'msg' => 'Invalid or missing authentication token',
+            'data' => null
+        ]);
         return false;
     }
 }

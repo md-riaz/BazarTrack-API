@@ -85,7 +85,7 @@ class OrderController {
                 'completed_at' => $row['completed_at'],
             ];
         }
-        echo json_encode($orders_arr);
+        ResponseHelper::success('Orders retrieved successfully', $orders_arr);
     }
 
     private function getOrder($id) {
@@ -97,7 +97,7 @@ class OrderController {
         $stmt = $this->order->readOne();
         if ($stmt->rowCount() === 1) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            echo json_encode([
+            ResponseHelper::success('Order retrieved successfully', [
                 'id' => $row['id'],
                 'created_by' => $row['created_by'],
                 'assigned_to' => $row['assigned_to'],
@@ -193,8 +193,7 @@ class OrderController {
 
             $this->db->commit();
             $this->logAction('order', $this->order->id, 'create', AuthMiddleware::$userId, $data);
-            http_response_code(201);
-            echo json_encode([
+            ResponseHelper::success('Order created successfully', [
                 'id' => $this->order->id,
                 'created_by' => $this->order->created_by,
                 'assigned_to' => $this->order->assigned_to,
@@ -202,7 +201,7 @@ class OrderController {
                 'created_at' => $this->order->created_at,
                 'completed_at' => $this->order->completed_at,
                 'items' => $createdItems,
-            ]);
+            ], 201);
         } catch (\Exception $e) {
             $this->db->rollBack();
             $status = $e->getCode() ?: 500;
@@ -234,7 +233,7 @@ class OrderController {
         $this->order->status = $data['status'];
         $this->order->completed_at = $data['status'] === 'completed' ? TIMESTAMP : null;
         if ($this->order->update()) {
-            echo json_encode([
+            ResponseHelper::success('Order updated successfully', [
                 'id' => $this->order->id,
                 'assigned_to' => $this->order->assigned_to,
                 'status' => $this->order->status,
@@ -252,7 +251,7 @@ class OrderController {
         }
         $this->order->id = $id;
         if ($this->order->delete()) {
-            echo json_encode(["message" => "Order deleted."]);
+            ResponseHelper::success('Order deleted successfully');
         } else {
             ResponseHelper::error(500, 'Unable to delete order.');
         }
@@ -316,7 +315,7 @@ class OrderController {
         $this->order->completed_at = $current['completed_at'];
         if ($this->order->update()) {
             $this->logAction('order', $id, 'assign', $actorId, ['user_id' => $targetId]);
-            echo json_encode([
+            ResponseHelper::success('Order assigned successfully', [
                 'id' => $this->order->id,
                 'assigned_to' => $this->order->assigned_to,
                 'assigned_by' => $actorId,
@@ -346,7 +345,7 @@ class OrderController {
         $this->order->completed_at = TIMESTAMP;
         if ($this->order->update()) {
             $this->logAction('order', $id, 'complete', AuthMiddleware::$userId, $data);
-            echo json_encode(["message" => "Order marked as completed."]);
+            ResponseHelper::success('Order marked as completed successfully');
         } else {
             ResponseHelper::error(500, 'Unable to complete order.');
         }

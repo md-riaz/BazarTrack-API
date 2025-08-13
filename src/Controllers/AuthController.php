@@ -42,7 +42,7 @@ class AuthController {
                 $token->token = $tokenValue;
                 $token->created_at = TIMESTAMP;
                 $token->create();
-                echo json_encode([
+                ResponseHelper::success('Login successful', [
                     'token' => $tokenValue,
                     'user' => [
                         'id' => $row['id'],
@@ -65,7 +65,7 @@ class AuthController {
         $tokenValue = str_replace('Bearer ', '', $header);
         $token = new Token($this->db);
         $token->revoke($tokenValue);
-        echo json_encode(['message' => 'Logged out successfully.']);
+        ResponseHelper::success('Logged out successfully');
     }
 
     public function me() {
@@ -79,7 +79,7 @@ class AuthController {
         $stmt->bindParam(1, $userId);
         $stmt->execute();
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        echo json_encode(['user' => $user]);
+        ResponseHelper::success('User information retrieved', ['user' => $user]);
     }
 
     public function refresh() {
@@ -97,6 +97,6 @@ class AuthController {
         $token->created_at = TIMESTAMP;
         $token->create();
 
-        echo json_encode(['token' => $newValue]);
+        ResponseHelper::success('Token refreshed successfully', ['token' => $newValue]);
     }
 }

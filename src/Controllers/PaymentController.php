@@ -55,7 +55,7 @@ class PaymentController {
                 'created_at' => $row['created_at'],
             ];
         }
-        echo json_encode($payments_arr);
+        ResponseHelper::success('Payments retrieved successfully', $payments_arr);
     }
 
     private function createPayment()
@@ -102,14 +102,13 @@ class PaymentController {
             $wallet->updateBalance($data['user_id'], $amount);
             $wallet->addTransaction($data['user_id'], $data['amount'], $data['type'], TIMESTAMP);
             $this->logAction('payment', $this->payment->id, 'create', AuthMiddleware::$userId, $data);
-            http_response_code(201);
-            echo json_encode([
+            ResponseHelper::success('Payment created successfully', [
                 'id' => $this->payment->id,
                 'user_id' => $this->payment->user_id,
                 'amount' => $this->payment->amount,
                 'type' => $this->payment->type,
                 'created_at' => $this->payment->created_at,
-            ]);
+            ], 201);
         } else {
             ResponseHelper::error(500, 'Unable to create payment.');
         }
