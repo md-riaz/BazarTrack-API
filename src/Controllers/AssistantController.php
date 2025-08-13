@@ -47,7 +47,7 @@ class AssistantController {
             }
             $assistants[] = $assistant;
         }
-        echo json_encode($assistants);
+        ResponseHelper::success('Assistants retrieved successfully', $assistants);
     }
 }
 

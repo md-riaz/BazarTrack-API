@@ -62,7 +62,7 @@ class HistoryLogController {
                 'data_snapshot' => json_decode($row['data_snapshot']),
             ];
         }
-        echo json_encode($logs_arr);
+        ResponseHelper::success('History logs retrieved successfully', $logs_arr);
     }
 
     private function getLogsByEntity($type, $entityId) {
@@ -81,7 +81,7 @@ class HistoryLogController {
                 'data_snapshot' => json_decode($row['data_snapshot']),
             ];
         }
-        echo json_encode($logs_arr);
+        ResponseHelper::success('Entity history logs retrieved successfully', $logs_arr);
     }
 
     private function createLog() {
@@ -105,8 +105,7 @@ class HistoryLogController {
         $this->log->timestamp = TIMESTAMP;
         $this->log->data_snapshot = $data['data_snapshot'];
         if ($this->log->create()) {
-            http_response_code(201);
-            echo json_encode([
+            ResponseHelper::success('History log created successfully', [
                 'id' => $this->log->id,
                 'entity_type' => $this->log->entity_type,
                 'entity_id' => $this->log->entity_id,
@@ -114,7 +113,7 @@ class HistoryLogController {
                 'changed_by_user_id' => $this->log->changed_by_user_id,
                 'timestamp' => $this->log->timestamp,
                 'data_snapshot' => $this->log->data_snapshot,
-            ]);
+            ], 201);
         } else {
             ResponseHelper::error(500, 'Unable to create log.');
         }
@@ -127,7 +126,7 @@ class HistoryLogController {
         }
         $this->log->id = $id;
         if ($this->log->delete()) {
-            echo json_encode(["message" => "Log deleted."]);
+            ResponseHelper::success('Log deleted successfully');
         } else {
             ResponseHelper::error(500, 'Unable to delete log.');
         }
