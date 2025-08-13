@@ -11,6 +11,7 @@ use App\Core\LoggerTrait;
 use App\Core\ResponseHelper;
 use App\Core\Validator;
 
+
 use App\Core\AuthMiddleware;
 
 use PDO;
@@ -227,7 +228,6 @@ class OrderItemController {
         $this->item->estimated_cost = array_key_exists('estimated_cost', $data) ? $data['estimated_cost'] : $current['estimated_cost'];
         $this->item->actual_cost = array_key_exists('actual_cost', $data) ? $data['actual_cost'] : $current['actual_cost'];
         $this->item->status = $data['status'] ?? $current['status'];
-
         $diff = 0;
         if (array_key_exists('actual_cost', $data) && $data['actual_cost'] !== null) {
             $newActual = $data['actual_cost'];
@@ -235,13 +235,35 @@ class OrderItemController {
             $diff = $newActual - $oldActual;
         }
 
+        $fieldsToTrack = ['product_name', 'quantity', 'unit', 'estimated_cost', 'actual_cost', 'status'];
+        $changedFields = [];
+        $previousValues = [];
+        $newValues = [];
+        foreach ($fieldsToTrack as $field) {
+            $newValue = $this->item->$field;
+            $oldValue = $current[$field];
+            if ($newValue != $oldValue) {
+                $changedFields[] = $field;
+                $previousValues[$field] = $oldValue;
+                $newValues[$field] = $newValue;
+            }
+        }
+        $reason = $data['reason'] ?? null;
+
         if ($this->item->update()) {
             if ($diff != 0) {
                 $wallet->updateBalance(AuthMiddleware::$userId, -$diff);
                 $type = $diff > 0 ? 'debit' : 'credit';
                 $wallet->addTransaction(AuthMiddleware::$userId, abs($diff), $type, TIMESTAMP);
             }
-            $this->logAction('order_item', $id, 'update', AuthMiddleware::$userId, $data);
+            $snapshot = [
+                'changed_fields' => $changedFields,
+                'previous_values' => $previousValues,
+                'new_values' => $newValues,
+                'cost_diff' => $diff,
+                'reason' => $reason,
+            ];
+            $this->logAction('order_item', $id, 'update', AuthMiddleware::$userId, $snapshot);
             echo json_encode([
                 'id' => $this->item->id,
                 'order_id' => $this->item->order_id,
