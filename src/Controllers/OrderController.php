@@ -73,7 +73,28 @@ class OrderController {
     }
 
     private function getOrders() {
-        $stmt = $this->order->readAll();
+        $status = $_GET['status'] ?? null;
+        $assignedToRaw = $_GET['assigned_to'] ?? null;
+
+        $filters = [];
+        if ($status !== null) {
+            $filters['status'] = $status;
+        }
+
+        if ($assignedToRaw !== null && $assignedToRaw !== '') {
+            $normalized = strtolower($assignedToRaw);
+            if (in_array($normalized, ['null', 'none', 'unassigned'], true)) {
+                $filters['assigned_to'] = null;
+            } else {
+                if (!Validator::validateInt($assignedToRaw)) {
+                    ResponseHelper::error(400, 'Invalid assigned_to.');
+                    return;
+                }
+                $filters['assigned_to'] = (int)$assignedToRaw;
+            }
+        }
+
+        $stmt = $this->order->readAll($filters);
         $orders_arr = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $orders_arr[] = [

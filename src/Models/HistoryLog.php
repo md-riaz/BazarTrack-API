@@ -29,6 +29,14 @@ class HistoryLog {
         return $stmt;
     }
 
+    public function readByUser($userId) {
+        $query = "SELECT id, entity_type, entity_id, action, changed_by_user_id, timestamp, data_snapshot FROM " . $this->table_name . " WHERE changed_by_user_id = :user_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt;
+    }
+
     public function readByEntity() {
         $query = "SELECT id, entity_type, entity_id, action, changed_by_user_id, timestamp, data_snapshot FROM " . $this->table_name . " WHERE entity_type = ? AND entity_id = ?";
         $stmt = $this->conn->prepare($query);

@@ -5,7 +5,9 @@ class ResponseHelper
 {
     public static function error(int $status, string $message, ?string $errorCode = null): void
     {
-        http_response_code($status);
+        if (!headers_sent()) {
+            http_response_code($status);
+        }
         echo json_encode([
             'error' => $errorCode ?? (string)$status,
             'msg' => $message,
@@ -15,7 +17,9 @@ class ResponseHelper
 
     public static function success(string $message, $data = null, int $status = 200): void
     {
-        http_response_code($status);
+        if (!headers_sent()) {
+            http_response_code($status);
+        }
         echo json_encode([
             'error' => null,
             'msg' => $message,

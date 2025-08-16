@@ -140,13 +140,15 @@ switch ($resource) {
             }
             break;
         }
-        // /api/analytics/dashboard and /api/analytics/reports
+        // /api/analytics/*
         if ($second === 'analytics') {
             $analyticsController = new AnalyticsController();
             if ($third === 'dashboard' && $method === 'GET') {
                 $analyticsController->dashboard();
             } elseif ($third === 'reports' && $method === 'GET') {
                 $analyticsController->reports();
+            } elseif ($third === 'assistants' && $fourth && $method === 'GET') {
+                $analyticsController->assistantSummary($fourth);
             } else {
                 ResponseHelper::error(404, 'Endpoint not found.');
             }

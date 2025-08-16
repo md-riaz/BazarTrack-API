@@ -90,7 +90,7 @@ Endpoints annotated with **(🔒 requires token)** need this header.
 - *No registration endpoint is provided.*
 
 ### Orders
-- `GET /api/orders` – list orders. **(🔒 requires token)**
+- `GET /api/orders` – list orders. Supports `status` and `assigned_to` query parameters (`assigned_to=null` for unassigned). **(🔒 requires token)**
 - `POST /api/orders` – create an order. **(🔒 requires token)**
 - `GET /api/orders/{id}` – get a specific order. **(🔒 requires token)**
 - `PUT /api/orders/{id}` – update an order. **(🔒 requires token)**
@@ -107,7 +107,7 @@ Endpoints annotated with **(🔒 requires token)** need this header.
 - `DELETE /api/order_items/{order_id}/{id}` – delete an item. **(🔒 requires token)**
 
 ### Payments
-- `GET /api/payments` – list payments. **(🔒 requires token)**
+- `GET /api/payments` – list payments. Supports `user_id`, `type`, `from`, and `to` filters. **(🔒 requires token)**
 - `POST /api/payments` – create a payment. **(🔒 requires token)**
 
 ### Wallet
@@ -115,7 +115,7 @@ Endpoints annotated with **(🔒 requires token)** need this header.
 - `GET /api/wallet/{user_id}/transactions` – list wallet transactions. **(🔒 requires token)**
 
 ### History
-- `GET /api/history` – list history logs. **(🔒 requires token)**
+- `GET /api/history` – list history logs. Supports a `changed_by` filter. **(🔒 requires token)**
 - `GET /api/history/{entity}/{id}` – logs for a specific entity instance. **(🔒 requires token)**
 - `POST /api/history` – create a log entry. **(🔒 requires token)**
 - `DELETE /api/history/{id}` – delete a log entry. **(🔒 requires token)**
@@ -123,6 +123,7 @@ Endpoints annotated with **(🔒 requires token)** need this header.
 ### Analytics
 - `GET /api/analytics/dashboard` – basic dashboard statistics. **(🔒 requires token)**
 - `GET /api/analytics/reports` – monthly reports. **(🔒 requires token)**
+- `GET /api/analytics/assistants/{id}` – per-assistant summary. **(🔒 requires token)**
 
 ## Example workflow
 
