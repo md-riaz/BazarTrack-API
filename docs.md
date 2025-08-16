@@ -115,6 +115,10 @@ Requires an `Authorization: Bearer <token>` header.
 ### `GET /api/orders`
 List all orders.
 
+**Query parameters**
+- `status` – filter by order status.
+- `assigned_to` – assistant user id. Use `assigned_to=null` to retrieve unassigned orders. If omitted, all orders are returned.
+
 **Response**
 ```json
 [
@@ -394,6 +398,12 @@ The deleting user is taken from the authenticated token.
 ### `GET /api/payments`
 List recorded payments.
 
+**Query parameters**
+- `user_id` – filter by wallet owner.
+- `type` – `credit` or `debit`.
+- `from` – inclusive start date (`YYYY-MM-DD`).
+- `to` – inclusive end date (`YYYY-MM-DD`).
+
 **Response**
 ```json
 [
@@ -474,6 +484,9 @@ List wallet transactions for a user in reverse chronological order.
 
 ### `GET /api/history`
 List all history log entries.
+
+**Query parameters**
+- `changed_by` – filter by the user id that performed the action.
 
 **Response**
 ```json
@@ -572,6 +585,25 @@ Return monthly order counts and revenue totals.
     "revenue": 1000.0
   }
 ]
+```
+
+### `GET /api/analytics/assistants/{id}`
+Return per-assistant order and revenue totals along with monthly trends.
+
+**Response**
+```json
+{
+  "total_orders": 5,
+  "total_revenue": 250.0,
+  "orders_by_month": [
+    { "month": "2024-01", "count": 3 },
+    { "month": "2024-02", "count": 2 }
+  ],
+  "revenue_by_month": [
+    { "month": "2024-01", "revenue": 150.0 },
+    { "month": "2024-02", "revenue": 100.0 }
+  ]
+}
 ```
 
 ## Assistants

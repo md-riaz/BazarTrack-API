@@ -19,9 +19,33 @@ class Payment {
         $this->conn = $db;
     }
 
-    public function readAll() {
+    public function readAll(array $filters = []) {
         $query = "SELECT id, user_id, amount, type, created_at FROM " . $this->table_name;
+        $conditions = [];
+        $params = [];
+        if (isset($filters['user_id'])) {
+            $conditions[] = "user_id = :user_id";
+            $params[':user_id'] = $filters['user_id'];
+        }
+        if (isset($filters['type'])) {
+            $conditions[] = "type = :type";
+            $params[':type'] = $filters['type'];
+        }
+        if (isset($filters['from'])) {
+            $conditions[] = "created_at >= :from";
+            $params[':from'] = $filters['from'];
+        }
+        if (isset($filters['to'])) {
+            $conditions[] = "created_at <= :to";
+            $params[':to'] = $filters['to'];
+        }
+        if ($conditions) {
+            $query .= " WHERE " . implode(" AND ", $conditions);
+        }
         $stmt = $this->conn->prepare($query);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
         $stmt->execute();
         return $stmt;
     }

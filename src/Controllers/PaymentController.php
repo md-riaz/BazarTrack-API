@@ -44,7 +44,25 @@ class PaymentController {
     }
 
     private function getPayments() {
-        $stmt = $this->payment->readAll();
+        $filters = [];
+        if (isset($_GET['user_id'])) {
+            if (!Validator::validateInt($_GET['user_id'])) {
+                ResponseHelper::error(400, 'Invalid user_id.');
+                return;
+            }
+            $filters['user_id'] = (int)$_GET['user_id'];
+        }
+        if (isset($_GET['type'])) {
+            $filters['type'] = $_GET['type'];
+        }
+        if (isset($_GET['from'])) {
+            $filters['from'] = $_GET['from'];
+        }
+        if (isset($_GET['to'])) {
+            $filters['to'] = $_GET['to'];
+        }
+
+        $stmt = $this->payment->readAll($filters);
         $payments_arr = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $payments_arr[] = [

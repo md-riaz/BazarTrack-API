@@ -21,9 +21,30 @@ class Order {
         $this->conn = $db;
     }
 
-    public function readAll() {
+    public function readAll(array $filters = []) {
         $query = "SELECT id, created_by, assigned_to, status, created_at, completed_at FROM " . $this->table_name;
+        $conditions = [];
+        $params = [];
+
+        if (isset($filters['status'])) {
+            $conditions[] = "status = :status";
+            $params[':status'] = $filters['status'];
+        }
+        if (array_key_exists('assigned_to', $filters)) {
+            if ($filters['assigned_to'] === null) {
+                $conditions[] = "assigned_to IS NULL";
+            } else {
+                $conditions[] = "assigned_to = :assigned_to";
+                $params[':assigned_to'] = $filters['assigned_to'];
+            }
+        }
+        if ($conditions) {
+            $query .= " WHERE " . implode(" AND ", $conditions);
+        }
         $stmt = $this->conn->prepare($query);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
         $stmt->execute();
         return $stmt;
     }

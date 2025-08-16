@@ -49,7 +49,16 @@ class HistoryLogController {
     }
 
     private function getLogs() {
-        $stmt = $this->log->readAll();
+        $changedBy = $_GET['changed_by'] ?? null;
+        if ($changedBy !== null) {
+            if (!Validator::validateInt($changedBy)) {
+                ResponseHelper::error(400, 'Invalid user ID.');
+                return;
+            }
+            $stmt = $this->log->readByUser((int)$changedBy);
+        } else {
+            $stmt = $this->log->readAll();
+        }
         $logs_arr = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $logs_arr[] = [

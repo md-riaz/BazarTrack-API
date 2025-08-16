@@ -6,9 +6,10 @@ namespace App\Controllers;
 use App\Core\Database;
 use PDO;
 use App\Core\AuthMiddleware;
+use App\Core\ResponseHelper;
 
 class AnalyticsController {
-    private $db;
+    protected $db;
 
     public function __construct() {
         $database = new Database();
@@ -58,6 +59,44 @@ class AnalyticsController {
         ResponseHelper::success('Monthly reports retrieved successfully', [
             'orders_by_month' => $ordersByMonth,
             'revenue_by_month' => $revenueByMonth
+        ]);
+    }
+
+    public function assistantSummary($userId) {
+        if (!AuthMiddleware::check()) {
+            return;
+        }
+
+        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM orders WHERE assigned_to = ?");
+        $stmt->execute([$userId]);
+        $totalOrders = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        $stmt = $this->db->prepare("SELECT COALESCE(SUM(amount),0) AS total FROM payments WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        $totalRevenue = (float)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $monthExpr = $driver === 'mysql'
+            ? "DATE_FORMAT(created_at, '%Y-%m')"
+            : "strftime('%Y-%m', created_at)";
+
+        $ordersStmt = $this->db->prepare(
+            "SELECT $monthExpr AS month, COUNT(*) AS count FROM orders WHERE assigned_to = ? GROUP BY month ORDER BY month"
+        );
+        $ordersStmt->execute([$userId]);
+        $ordersByMonth = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $revenueStmt = $this->db->prepare(
+            "SELECT $monthExpr AS month, COALESCE(SUM(amount),0) AS revenue FROM payments WHERE user_id = ? GROUP BY month ORDER BY month"
+        );
+        $revenueStmt->execute([$userId]);
+        $revenueByMonth = $revenueStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        ResponseHelper::success('Assistant analytics retrieved successfully', [
+            'total_orders' => $totalOrders,
+            'total_revenue' => $totalRevenue,
+            'orders_by_month' => $ordersByMonth,
+            'revenue_by_month' => $revenueByMonth,
         ]);
     }
 }
