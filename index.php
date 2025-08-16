@@ -130,11 +130,13 @@ switch ($resource) {
             }
             break;
         }
-        // /api/history/:entity_type/:entity_id
+        // /api/history/:entity_type/:entity_id and /api/history/:entity_type
         if ($second === 'history') {
             $historyController = new HistoryLogController();
-            if ($third && $fourth) {
+            if ($third !== null && $fourth !== null) {
                 $historyController->processRequest($method, null, $third, $fourth);
+            } elseif ($third !== null) {
+                $historyController->processRequest($method, null, $third);
             } else {
                 $historyController->processRequest($method);
             }

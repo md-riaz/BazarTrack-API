@@ -26,8 +26,14 @@ class HistoryLogController {
         }
         switch ($method) {
             case 'GET':
-                if ($entityType && $entityId) {
-                    $this->getLogsByEntity($entityType, $entityId);
+                if ($entityType !== null && $entityId !== null) {
+                    if (!Validator::validateInt($entityId)) {
+                        ResponseHelper::error(400, 'Invalid entity ID.');
+                        return;
+                    }
+                    $this->getLogsByEntity($entityType, (int)$entityId);
+                } elseif ($entityType !== null) {
+                    $this->getLogsByEntityType($entityType);
                 } else {
                     $this->getLogs();
                 }
@@ -74,9 +80,27 @@ class HistoryLogController {
         ResponseHelper::success('History logs retrieved successfully', $logs_arr);
     }
 
+    private function getLogsByEntityType($type) {
+        $this->log->entity_type = $type;
+        $stmt = $this->log->readByEntityType();
+        $logs_arr = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $logs_arr[] = [
+                'id' => $row['id'],
+                'entity_type' => $row['entity_type'],
+                'entity_id' => $row['entity_id'],
+                'action' => $row['action'],
+                'changed_by_user_id' => $row['changed_by_user_id'],
+                'timestamp' => $row['timestamp'],
+                'data_snapshot' => json_decode($row['data_snapshot']),
+            ];
+        }
+        ResponseHelper::success('Entity type history logs retrieved successfully', $logs_arr);
+    }
+
     private function getLogsByEntity($type, $entityId) {
         $this->log->entity_type = $type;
-        $this->log->entity_id = $entityId;
+        $this->log->entity_id = (int)$entityId;
         $stmt = $this->log->readByEntity();
         $logs_arr = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {

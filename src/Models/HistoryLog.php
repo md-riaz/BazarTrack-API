@@ -37,11 +37,19 @@ class HistoryLog {
         return $stmt;
     }
 
+    public function readByEntityType() {
+        $query = "SELECT id, entity_type, entity_id, action, changed_by_user_id, timestamp, data_snapshot FROM " . $this->table_name . " WHERE entity_type = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(1, $this->entity_type, PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt;
+    }
+
     public function readByEntity() {
         $query = "SELECT id, entity_type, entity_id, action, changed_by_user_id, timestamp, data_snapshot FROM " . $this->table_name . " WHERE entity_type = ? AND entity_id = ?";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, $this->entity_type);
-        $stmt->bindParam(2, $this->entity_id);
+        $stmt->bindParam(1, $this->entity_type, PDO::PARAM_STR);
+        $stmt->bindParam(2, $this->entity_id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt;
     }
