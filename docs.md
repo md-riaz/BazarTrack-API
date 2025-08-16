@@ -9,7 +9,7 @@ The API supports an owner–assistant purchasing workflow. The list below shows 
 ### Owner dashboard
 - **Stats (total, assigned, in progress, completed)** – `GET /api/analytics/dashboard` returns aggregated counts, and `GET /api/orders` lists all orders for client-side filtering.
 - **Assistant wallet summary & advance history** – `GET /api/wallet/{assistant_id}` for current balance and `GET /api/wallet/{assistant_id}/transactions` for advances and expenses.
-- **Order activity timeline** – `GET /api/history/order/{order_id}` shows a chronological log for a specific order.
+- **Order activity timeline** – `GET /api/history/order/{order_id}` shows a chronological log for a specific order, or `GET /api/history/order` lists logs for all orders.
 
 ### Assistant dashboard
 - **Assigned orders** – `GET /api/orders` with client-side filtering by `assigned_to` or `status`.
@@ -18,7 +18,7 @@ The API supports an owner–assistant purchasing workflow. The list below shows 
 ### Purchase entry / order detail
 - **Update item status and costs** – `PUT /api/order_items/{order_id}/{item_id}`.
 - **Record expenses or advances** – `POST /api/payments` with `type` set to `debit` or `credit`.
-- **Timeline and action log** – actions are stored via `POST /api/history` and retrievable with `GET /api/history/order/{order_id}`.
+- **Timeline and action log** – actions are stored via `POST /api/history` and retrievable with `GET /api/history/order/{order_id}` or `GET /api/history/order` for all orders.
 
 ### Order Management
 - **Create order** – Owner makes a new order and can submit initial line items in the same request using POST /api/orders
@@ -31,7 +31,7 @@ The API supports an owner–assistant purchasing workflow. The list below shows 
 - **Automatic adjustments** – When an assistant supplies actual_cost for an item via PUT /api/order_items/{order_id}/{id}, the wallet is adjusted by the difference from the previous actual_cost (debit if the cost increases, credit if it decreases) and a transaction is logged
 
 ### Activity Timeline & Logging
-- **History logging** – Any action (order creation, item updates, assignments, etc.) can be recorded via POST /api/history, and individual entity timelines are retrieved with GET /api/history/{entity}/{id}
+- **History logging** – Any action (order creation, item updates, assignments, etc.) can be recorded via POST /api/history, and individual entity timelines are retrieved with `GET /api/history/{entity}/{id}` or all logs of a type with `GET /api/history/{entity}`.
 - These endpoints allow building the “Order Activity Timeline” and “Action Log” views you described.
 
 ### Dashboards & Analytics
@@ -43,7 +43,7 @@ The API supports an owner–assistant purchasing workflow. The list below shows 
 3. Assistant self-assigns or is assigned – `POST /api/orders/{id}/assign`.
 4. Assistant updates item costs – `PUT /api/order_items/{order_id}/{item_id}` and logs expenses with `POST /api/payments` (`debit`).
 5. System logs each action – `POST /api/history`.
-6. Owner reviews the timeline – `GET /api/history/order/{id}`.
+6. Owner reviews the timeline – `GET /api/history/order/{id}` or all order logs with `GET /api/history/order`.
 
 Error responses share a common structure:
 ```json
@@ -487,6 +487,23 @@ List all history log entries.
 
 **Query parameters**
 - `changed_by` – filter by the user id that performed the action.
+
+**Response**
+```json
+[
+  {
+    "id": 1,
+    "entity_type": "order",
+    "entity_id": 1,
+    "action": "created",
+    "changed_by_user_id": 1,
+    "timestamp": "2024-01-03 09:00:00"
+  }
+]
+```
+
+### `GET /api/history/{entity}`
+List log entries for all records of a given entity type (e.g. `order`).
 
 **Response**
 ```json
