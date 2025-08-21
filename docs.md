@@ -50,6 +50,13 @@ Error responses share a common structure:
 { "error": "<message>" }
 ```
 
+## Pagination
+
+List endpoints support cursor-based pagination.
+Use the `limit` query parameter to control page size (maximum 30, default 30)
+and `cursor` to supply the last seen primary key value. Results are returned
+in descending order by ID and contain items with IDs less than the cursor.
+
 ## Authentication
 
 ### `POST /api/auth/login`
@@ -118,6 +125,8 @@ List all orders.
 **Query parameters**
 - `status` – filter by order status.
 - `assigned_to` – assistant user id. Use `assigned_to=null` to retrieve unassigned orders. If omitted, all orders are returned.
+- `limit` – number of records to return (max 30).
+- `cursor` – return records with IDs less than this value.
 
 **Response**
 ```json
@@ -277,6 +286,10 @@ Only assistants can mark orders as completed.
 ### `GET /api/order_items`
 List all order items.
 
+**Query parameters**
+- `limit` – number of records to return (max 30).
+- `cursor` – return records with IDs less than this value.
+
 **Response**
 ```json
 [
@@ -293,6 +306,10 @@ List all order items.
 
 ### `GET /api/order_items/{order_id}`
 List items for a specific order.
+
+**Query parameters**
+- `limit` – number of records to return (max 30).
+- `cursor` – return records with IDs less than this value.
 
 **Response**
 ```json
@@ -403,6 +420,8 @@ List recorded payments.
 - `type` – `credit` or `debit`.
 - `from` – inclusive start date (`YYYY-MM-DD`).
 - `to` – inclusive end date (`YYYY-MM-DD`).
+- `limit` – number of records to return (max 30).
+- `cursor` – return records with IDs less than this value.
 
 **Response**
 ```json
@@ -458,6 +477,10 @@ Return the wallet balance for a user.
 ### `GET /api/wallet/{user_id}/transactions`
 List wallet transactions for a user in reverse chronological order.
 
+**Query parameters**
+- `limit` – number of records to return (max 30).
+- `cursor` – return records with IDs less than this value.
+
 **Response**
 ```json
 [
@@ -487,6 +510,8 @@ List all history log entries.
 
 **Query parameters**
 - `changed_by` – filter by the user id that performed the action.
+- `limit` – number of records to return (max 30).
+- `cursor` – return records with IDs less than this value.
 
 **Response**
 ```json
@@ -505,6 +530,10 @@ List all history log entries.
 ### `GET /api/history/{entity}`
 List log entries for all records of a given entity type (e.g. `order`).
 
+**Query parameters**
+- `limit` – number of records to return (max 30).
+- `cursor` – return records with IDs less than this value.
+
 **Response**
 ```json
 [
@@ -521,6 +550,10 @@ List log entries for all records of a given entity type (e.g. `order`).
 
 ### `GET /api/history/{entity}/{id}`
 List log entries related to a particular entity (e.g. `order`).
+
+**Query parameters**
+- `limit` – number of records to return (max 30).
+- `cursor` – return records with IDs less than this value.
 
 **Response**
 ```json
@@ -630,6 +663,8 @@ List assistant users.
 
 **Query parameters**
 - `with_balance` – if `true`, include current wallet balances.
+- `limit` – number of records to return (max 30).
+- `cursor` – return records with IDs less than this value.
 
 **Response**
 ```json

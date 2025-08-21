@@ -44,7 +44,8 @@ class UserController {
     }
 
     private function getUsers() {
-        $stmt = $this->user->readAll();
+        [$limit, $cursor] = \App\Core\Pagination::getParams();
+        $stmt = $this->user->readAll($limit, $cursor);
         $users_arr = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $users_arr[] = [

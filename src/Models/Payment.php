@@ -19,7 +19,7 @@ class Payment {
         $this->conn = $db;
     }
 
-    public function readAll(array $filters = []) {
+    public function readAll(array $filters = [], int $limit = 30, ?int $cursor = null) {
         $query = "SELECT id, user_id, amount, type, created_at FROM " . $this->table_name;
         $conditions = [];
         $params = [];
@@ -39,13 +39,19 @@ class Payment {
             $conditions[] = "created_at <= :to";
             $params[':to'] = $filters['to'];
         }
+        if ($cursor !== null) {
+            $conditions[] = "id < :cursor";
+            $params[':cursor'] = $cursor;
+        }
         if ($conditions) {
             $query .= " WHERE " . implode(" AND ", $conditions);
         }
+        $query .= " ORDER BY id DESC LIMIT :limit";
         $stmt = $this->conn->prepare($query);
         foreach ($params as $key => $value) {
             $stmt->bindValue($key, $value);
         }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt;
     }

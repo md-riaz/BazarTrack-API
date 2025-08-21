@@ -22,34 +22,66 @@ class HistoryLog {
         $this->conn = $db;
     }
 
-    public function readAll() {
+    public function readAll(int $limit = 30, ?int $cursor = null) {
         $query = "SELECT id, entity_type, entity_id, action, changed_by_user_id, timestamp, data_snapshot FROM " . $this->table_name;
+        if ($cursor !== null) {
+            $query .= " WHERE id < :cursor";
+        }
+        $query .= " ORDER BY id DESC LIMIT :limit";
         $stmt = $this->conn->prepare($query);
+        if ($cursor !== null) {
+            $stmt->bindValue(':cursor', $cursor, PDO::PARAM_INT);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt;
     }
 
-    public function readByUser($userId) {
+    public function readByUser($userId, int $limit = 30, ?int $cursor = null) {
         $query = "SELECT id, entity_type, entity_id, action, changed_by_user_id, timestamp, data_snapshot FROM " . $this->table_name . " WHERE changed_by_user_id = :user_id";
+        if ($cursor !== null) {
+            $query .= " AND id < :cursor";
+        }
+        $query .= " ORDER BY id DESC LIMIT :limit";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        if ($cursor !== null) {
+            $stmt->bindValue(':cursor', $cursor, PDO::PARAM_INT);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt;
     }
 
-    public function readByEntityType() {
-        $query = "SELECT id, entity_type, entity_id, action, changed_by_user_id, timestamp, data_snapshot FROM " . $this->table_name . " WHERE entity_type = ?";
+    public function readByEntityType(int $limit = 30, ?int $cursor = null) {
+        $query = "SELECT id, entity_type, entity_id, action, changed_by_user_id, timestamp, data_snapshot FROM " . $this->table_name . " WHERE entity_type = :entity_type";
+        if ($cursor !== null) {
+            $query .= " AND id < :cursor";
+        }
+        $query .= " ORDER BY id DESC LIMIT :limit";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, $this->entity_type, PDO::PARAM_STR);
+        $stmt->bindParam(':entity_type', $this->entity_type, PDO::PARAM_STR);
+        if ($cursor !== null) {
+            $stmt->bindValue(':cursor', $cursor, PDO::PARAM_INT);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt;
     }
 
-    public function readByEntity() {
-        $query = "SELECT id, entity_type, entity_id, action, changed_by_user_id, timestamp, data_snapshot FROM " . $this->table_name . " WHERE entity_type = ? AND entity_id = ?";
+    public function readByEntity(int $limit = 30, ?int $cursor = null) {
+        $query = "SELECT id, entity_type, entity_id, action, changed_by_user_id, timestamp, data_snapshot FROM " . $this->table_name . " WHERE entity_type = :entity_type AND entity_id = :entity_id";
+        if ($cursor !== null) {
+            $query .= " AND id < :cursor";
+        }
+        $query .= " ORDER BY id DESC LIMIT :limit";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, $this->entity_type, PDO::PARAM_STR);
-        $stmt->bindParam(2, $this->entity_id, PDO::PARAM_INT);
+        $stmt->bindParam(':entity_type', $this->entity_type, PDO::PARAM_STR);
+        $stmt->bindParam(':entity_id', $this->entity_id, PDO::PARAM_INT);
+        if ($cursor !== null) {
+            $stmt->bindValue(':cursor', $cursor, PDO::PARAM_INT);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt;
     }

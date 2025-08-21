@@ -68,7 +68,8 @@ class WalletController {
             return;
         }
 
-        $stmt = $this->wallet->readTransactions($user_id);
+        [$limit, $cursor] = \App\Core\Pagination::getParams();
+        $stmt = $this->wallet->readTransactions($user_id, $limit, $cursor);
         $transactions_arr = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $transactions_arr[] = [

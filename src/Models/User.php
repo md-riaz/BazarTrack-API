@@ -18,21 +18,37 @@ class User {
         $this->conn = $db;
     }
 
-    public function readAll() {
+    public function readAll(int $limit = 30, ?int $cursor = null) {
         $query = "SELECT id, name, email, role FROM " . $this->table_name;
+        if ($cursor !== null) {
+            $query .= " WHERE id < :cursor";
+        }
+        $query .= " ORDER BY id DESC LIMIT :limit";
         $stmt = $this->conn->prepare($query);
+        if ($cursor !== null) {
+            $stmt->bindValue(':cursor', $cursor, PDO::PARAM_INT);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt;
     }
 
-    public function readAssistants(bool $includeBalance = false)
+    public function readAssistants(bool $includeBalance = false, int $limit = 30, ?int $cursor = null)
     {
         if ($includeBalance) {
             $query = "SELECT u.id, u.name, COALESCE(w.balance, 0) AS balance FROM {$this->table_name} u LEFT JOIN wallets w ON u.id = w.user_id WHERE u.role = 'assistant'";
         } else {
             $query = "SELECT id, name FROM {$this->table_name} WHERE role = 'assistant'";
         }
+        if ($cursor !== null) {
+            $query .= " AND id < :cursor";
+        }
+        $query .= " ORDER BY id DESC LIMIT :limit";
         $stmt = $this->conn->prepare($query);
+        if ($cursor !== null) {
+            $stmt->bindValue(':cursor', $cursor, PDO::PARAM_INT);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt;
     }

@@ -93,8 +93,8 @@ class OrderController {
                 $filters['assigned_to'] = (int)$assignedToRaw;
             }
         }
-
-        $stmt = $this->order->readAll($filters);
+        [$limit, $cursor] = \App\Core\Pagination::getParams();
+        $stmt = $this->order->readAll($filters, $limit, $cursor);
         $orders_arr = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $orders_arr[] = [
