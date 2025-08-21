@@ -62,7 +62,8 @@ class PaymentController {
             $filters['to'] = $_GET['to'];
         }
 
-        $stmt = $this->payment->readAll($filters);
+        [$limit, $cursor] = \App\Core\Pagination::getParams();
+        $stmt = $this->payment->readAll($filters, $limit, $cursor);
         $payments_arr = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $payments_arr[] = [

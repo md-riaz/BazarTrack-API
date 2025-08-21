@@ -35,7 +35,8 @@ class AssistantController {
     }
 
     private function getAssistants($includeBalance) {
-        $stmt = $this->user->readAssistants($includeBalance);
+        [$limit, $cursor] = \App\Core\Pagination::getParams();
+        $stmt = $this->user->readAssistants($includeBalance, $limit, $cursor);
         $assistants = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $assistant = [

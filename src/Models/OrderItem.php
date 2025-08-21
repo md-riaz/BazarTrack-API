@@ -23,10 +23,17 @@ class OrderItem {
         $this->conn = $db;
     }
 
-    public function readAll() {
-        $query = "SELECT id, order_id, product_name, quantity, unit, estimated_cost, actual_cost, status
-                  FROM {$this->table_name}";
+    public function readAll(int $limit = 30, ?int $cursor = null) {
+        $query = "SELECT id, order_id, product_name, quantity, unit, estimated_cost, actual_cost, status FROM {$this->table_name}";
+        if ($cursor !== null) {
+            $query .= " WHERE id < :cursor";
+        }
+        $query .= " ORDER BY id DESC LIMIT :limit";
         $stmt = $this->conn->prepare($query);
+        if ($cursor !== null) {
+            $stmt->bindValue(':cursor', $cursor, PDO::PARAM_INT);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt;
     }
@@ -41,12 +48,18 @@ class OrderItem {
         return $stmt;
     }
 
-    public function readByOrder() {
-        $query = "SELECT id, order_id, product_name, quantity, unit, estimated_cost, actual_cost, status
-                  FROM {$this->table_name}
-                  WHERE order_id = ?";
+    public function readByOrder(int $limit = 30, ?int $cursor = null) {
+        $query = "SELECT id, order_id, product_name, quantity, unit, estimated_cost, actual_cost, status FROM {$this->table_name} WHERE order_id = :order_id";
+        if ($cursor !== null) {
+            $query .= " AND id < :cursor";
+        }
+        $query .= " ORDER BY id DESC LIMIT :limit";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, $this->order_id);
+        $stmt->bindValue(':order_id', $this->order_id, PDO::PARAM_INT);
+        if ($cursor !== null) {
+            $stmt->bindValue(':cursor', $cursor, PDO::PARAM_INT);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt;
     }

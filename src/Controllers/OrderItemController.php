@@ -65,7 +65,8 @@ class OrderItemController {
     }
 
     private function getItems() {
-        $stmt = $this->item->readAll();
+        [$limit, $cursor] = \App\Core\Pagination::getParams();
+        $stmt = $this->item->readAll($limit, $cursor);
         $items_arr = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $items_arr[] = [
@@ -88,7 +89,8 @@ class OrderItemController {
             return;
         }
         $this->item->order_id = $orderId;
-        $stmt = $this->item->readByOrder();
+        [$limit, $cursor] = \App\Core\Pagination::getParams();
+        $stmt = $this->item->readByOrder($limit, $cursor);
         $items_arr = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $items_arr[] = [

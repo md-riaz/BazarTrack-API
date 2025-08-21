@@ -24,10 +24,18 @@ class Wallet {
         return $stmt;
     }
 
-    public function readTransactions($user_id) {
-        $query = "SELECT id, user_id, amount, type, created_at FROM transactions WHERE user_id = ? ORDER BY created_at DESC";
+    public function readTransactions($user_id, int $limit = 30, ?int $cursor = null) {
+        $query = "SELECT id, user_id, amount, type, created_at FROM transactions WHERE user_id = :user_id";
+        if ($cursor !== null) {
+            $query .= " AND id < :cursor";
+        }
+        $query .= " ORDER BY id DESC LIMIT :limit";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, $user_id);
+        $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+        if ($cursor !== null) {
+            $stmt->bindValue(':cursor', $cursor, PDO::PARAM_INT);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt;
     }
