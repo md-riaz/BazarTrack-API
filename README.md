@@ -42,8 +42,8 @@ Sample credentials you can use for testing:
 
 Use these when calling `POST /api/auth/login`.
 
-Additional owners or assistants should be created directly in the database.
-The API exposes no endpoints to register or modify users.
+Owners can create additional owners or assistants through the API using
+`POST /api/users`. User updates or deletions are not currently supported.
 
 ## Running
 
@@ -87,7 +87,12 @@ Endpoints annotated with **(🔒 requires token)** need this header.
 - `POST /api/auth/logout` – invalidate the current token. **(🔒 requires token)**
 - `GET /api/auth/me` – return information about the current user. **(🔒 requires token)**
 - `POST /api/auth/refresh` – issue a new token. **(🔒 requires token)**
-- *No registration endpoint is provided.*
+- User registration is limited to owners via `POST /api/users`.
+
+### Users
+- `GET /api/users` – list users. **(🔒 requires token)**
+- `GET /api/users/{id}` – retrieve a specific user. **(🔒 requires token)**
+- `POST /api/users` – create an owner or assistant (owners only). **(🔒 requires token)**
 
 ### Orders
 - `GET /api/orders` – list orders. Supports `status` and `assigned_to` query parameters (`assigned_to=null` for unassigned). **(🔒 requires token)**
