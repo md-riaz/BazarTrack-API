@@ -9,6 +9,7 @@ use App\Core\ResponseHelper;
 use App\Core\Validator;
 use PDO;
 use App\Core\AuthMiddleware;
+use App\Core\RoleGuard;
 
 class UserController {
     private $db;
@@ -33,6 +34,8 @@ class UserController {
                 }
                 break;
             case 'POST':
+                $this->createUser();
+                break;
             case 'PUT':
             case 'DELETE':
                 ResponseHelper::error(405, 'User management is disabled.');
@@ -80,17 +83,33 @@ class UserController {
 
     private function createUser() {
         $data = json_decode(file_get_contents("php://input"), true);
-        if (empty($data['name']) || empty($data['email'])) {
-            ResponseHelper::error(400, 'Name and email are required.');
+        if (empty($data['name']) || empty($data['email']) || empty($data['password']) || empty($data['role'])) {
+            ResponseHelper::error(400, 'Name, email, password and role are required.');
             return;
         }
+
+        $role = $data['role'];
+        if (!in_array($role, ['owner', 'assistant'], true)) {
+            ResponseHelper::error(400, 'Role must be owner or assistant.');
+            return;
+        }
+
+        $guard = new RoleGuard();
+        if (!$guard->checkRole(AuthMiddleware::$userId, ['owner'])) {
+            ResponseHelper::error(403, 'Only owners can create users.');
+            return;
+        }
+
         $this->user->name = $data['name'];
         $this->user->email = $data['email'];
+        $this->user->password = password_hash($data['password'], PASSWORD_DEFAULT);
+        $this->user->role = $role;
         if ($this->user->create()) {
             ResponseHelper::success('User created successfully', [
                 'id' => $this->user->id,
                 'name' => $this->user->name,
                 'email' => $this->user->email,
+                'role' => $this->user->role,
             ], 201);
         } else {
             ResponseHelper::error(500, 'Unable to create user.');

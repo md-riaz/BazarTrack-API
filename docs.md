@@ -111,7 +111,28 @@ Requires an `Authorization: Bearer <token>` header.
 **Response**
 ```json
 {
-  "token": "<string>"
+"token": "<string>"
+}
+```
+
+## Users
+
+### `POST /api/users`
+Create a new owner or assistant. Only authenticated owners may call this endpoint.
+
+**Body parameters**
+- `name` – user name
+- `email` – user email
+- `password` – plain text password
+- `role` – `owner` or `assistant`
+
+**Response**
+```json
+{
+  "id": 4,
+  "name": "New Assistant",
+  "email": "assistant@example.com",
+  "role": "assistant"
 }
 ```
 
