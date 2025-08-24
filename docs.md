@@ -156,6 +156,7 @@ List all orders.
     "id": 1,
     "created_by": 1,
     "assigned_to": 2,
+    "assigned_user_name": "Grace Morrison",
     "status": "pending",
     "created_at": "2024-01-02 11:00:00",
     "completed_at": null
@@ -231,6 +232,7 @@ Retrieve a single order by id.
   "id": 1,
   "created_by": 1,
   "assigned_to": 2,
+  "assigned_user_name": "Grace Morrison",
   "status": "pending",
   "created_at": "2024-01-02 11:00:00",
   "completed_at": null
