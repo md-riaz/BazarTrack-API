@@ -16,36 +16,37 @@ class Order {
     public $status;
     public $created_at;
     public $completed_at;
+    public $assigned_user_name;
 
     public function __construct(PDO $db) {
         $this->conn = $db;
     }
 
     public function readAll(array $filters = [], int $limit = 30, ?int $cursor = null) {
-        $query = "SELECT id, created_by, assigned_to, status, created_at, completed_at FROM " . $this->table_name;
+        $query = "SELECT o.id, o.created_by, o.assigned_to, u.name AS assigned_user_name, o.status, o.created_at, o.completed_at FROM " . $this->table_name . " o LEFT JOIN users u ON o.assigned_to = u.id";
         $conditions = [];
         $params = [];
 
         if (isset($filters['status'])) {
-            $conditions[] = "status = :status";
+            $conditions[] = "o.status = :status";
             $params[':status'] = $filters['status'];
         }
         if (array_key_exists('assigned_to', $filters)) {
             if ($filters['assigned_to'] === null) {
-                $conditions[] = "assigned_to IS NULL";
+                $conditions[] = "o.assigned_to IS NULL";
             } else {
-                $conditions[] = "assigned_to = :assigned_to";
+                $conditions[] = "o.assigned_to = :assigned_to";
                 $params[':assigned_to'] = $filters['assigned_to'];
             }
         }
         if ($cursor !== null) {
-            $conditions[] = "id < :cursor";
+            $conditions[] = "o.id < :cursor";
             $params[':cursor'] = $cursor;
         }
         if ($conditions) {
             $query .= " WHERE " . implode(" AND ", $conditions);
         }
-        $query .= " ORDER BY id DESC LIMIT :limit";
+        $query .= " ORDER BY o.id DESC LIMIT :limit";
         $stmt = $this->conn->prepare($query);
         foreach ($params as $key => $value) {
             $stmt->bindValue($key, $value);
@@ -56,7 +57,7 @@ class Order {
     }
 
     public function readOne() {
-        $query = "SELECT id, created_by, assigned_to, status, created_at, completed_at FROM " . $this->table_name . " WHERE id = ? LIMIT 1";
+        $query = "SELECT o.id, o.created_by, o.assigned_to, u.name AS assigned_user_name, o.status, o.created_at, o.completed_at FROM " . $this->table_name . " o LEFT JOIN users u ON o.assigned_to = u.id WHERE o.id = ? LIMIT 1";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(1, $this->id);
         $stmt->execute();
