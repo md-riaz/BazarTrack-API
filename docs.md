@@ -35,7 +35,7 @@ The API supports an owner–assistant purchasing workflow. The list below shows 
 - These endpoints allow building the “Order Activity Timeline” and “Action Log” views you described.
 
 ### Dashboards & Analytics
-- **Owner Dashboard stats** – Overall counts and revenue figures come from GET /api/analytics/dashboard; monthly breakdowns are available via GET /api/analytics/reports
+- **Owner Dashboard stats** – Overall counts and expense figures come from GET /api/analytics/dashboard; monthly breakdowns are available via GET /api/analytics/reports
 
 ### Example flow
 1. Owner creates an order – `POST /api/orders`.
@@ -607,19 +607,19 @@ Delete a history log entry.
 ## Analytics
 
 ### `GET /api/analytics/dashboard`
-Return overall counts and total revenue.
+Return overall counts and total expenses.
 
 **Response**
 ```json
 {
   "orders": 10,
   "order_items": 25,
-  "revenue": 1500.0
+  "expense": 1500.0
 }
 ```
 
 ### `GET /api/analytics/reports`
-Return monthly order counts and revenue totals.
+Return monthly order counts and expense totals.
 
 **Response**
 ```json
@@ -627,31 +627,31 @@ Return monthly order counts and revenue totals.
   {
     "month": "2024-01",
     "order_count": 5,
-    "revenue": 500.0
+    "expense": 500.0
   },
   {
     "month": "2024-02",
     "order_count": 5,
-    "revenue": 1000.0
+    "expense": 1000.0
   }
 ]
 ```
 
 ### `GET /api/analytics/assistants/{id}`
-Return per-assistant order and revenue totals along with monthly trends.
+Return per-assistant order and expense totals along with monthly trends.
 
 **Response**
 ```json
 {
   "total_orders": 5,
-  "total_revenue": 250.0,
+  "total_expense": 250.0,
   "orders_by_month": [
     { "month": "2024-01", "count": 3 },
     { "month": "2024-02", "count": 2 }
   ],
-  "revenue_by_month": [
-    { "month": "2024-01", "revenue": 150.0 },
-    { "month": "2024-02", "revenue": 100.0 }
+  "expense_by_month": [
+    { "month": "2024-01", "expense": 150.0 },
+    { "month": "2024-02", "expense": 100.0 }
   ]
 }
 ```

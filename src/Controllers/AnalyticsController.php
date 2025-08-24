@@ -29,14 +29,14 @@ class AnalyticsController {
         $stmt = $this->db->query("SELECT COUNT(*) AS total FROM payments");
         $totalPayments = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-        $stmt = $this->db->query("SELECT COALESCE(SUM(amount),0) AS total FROM payments");
-        $totalRevenue = (float)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        $stmt = $this->db->query("SELECT COALESCE(SUM(amount),0) AS total FROM payments WHERE type = 'debit'");
+        $totalExpense = (float)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
         ResponseHelper::success('Dashboard analytics retrieved successfully', [
             'total_users' => $totalUsers,
             'total_orders' => $totalOrders,
             'total_payments' => $totalPayments,
-            'total_revenue' => $totalRevenue
+            'total_expense' => $totalExpense
         ]);
     }
 
@@ -50,15 +50,15 @@ class AnalyticsController {
         );
         $ordersByMonth = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $revenueStmt = $this->db->query(
+        $expenseStmt = $this->db->query(
             "SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, " .
-            "SUM(amount) AS revenue FROM payments GROUP BY month ORDER BY month"
+            "SUM(amount) AS expense FROM payments WHERE type = 'debit' GROUP BY month ORDER BY month"
         );
-        $revenueByMonth = $revenueStmt->fetchAll(PDO::FETCH_ASSOC);
+        $expenseByMonth = $expenseStmt->fetchAll(PDO::FETCH_ASSOC);
 
         ResponseHelper::success('Monthly reports retrieved successfully', [
             'orders_by_month' => $ordersByMonth,
-            'revenue_by_month' => $revenueByMonth
+            'expense_by_month' => $expenseByMonth
         ]);
     }
 
@@ -71,9 +71,9 @@ class AnalyticsController {
         $stmt->execute([$userId]);
         $totalOrders = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-        $stmt = $this->db->prepare("SELECT COALESCE(SUM(amount),0) AS total FROM payments WHERE user_id = ?");
+        $stmt = $this->db->prepare("SELECT COALESCE(SUM(amount),0) AS total FROM payments WHERE user_id = ? AND type = 'debit'");
         $stmt->execute([$userId]);
-        $totalRevenue = (float)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        $totalExpense = (float)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
         $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
         $monthExpr = $driver === 'mysql'
@@ -86,17 +86,17 @@ class AnalyticsController {
         $ordersStmt->execute([$userId]);
         $ordersByMonth = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $revenueStmt = $this->db->prepare(
-            "SELECT $monthExpr AS month, COALESCE(SUM(amount),0) AS revenue FROM payments WHERE user_id = ? GROUP BY month ORDER BY month"
+        $expenseStmt = $this->db->prepare(
+            "SELECT $monthExpr AS month, COALESCE(SUM(amount),0) AS expense FROM payments WHERE user_id = ? AND type = 'debit' GROUP BY month ORDER BY month"
         );
-        $revenueStmt->execute([$userId]);
-        $revenueByMonth = $revenueStmt->fetchAll(PDO::FETCH_ASSOC);
+        $expenseStmt->execute([$userId]);
+        $expenseByMonth = $expenseStmt->fetchAll(PDO::FETCH_ASSOC);
 
         ResponseHelper::success('Assistant analytics retrieved successfully', [
             'total_orders' => $totalOrders,
-            'total_revenue' => $totalRevenue,
+            'total_expense' => $totalExpense,
             'orders_by_month' => $ordersByMonth,
-            'revenue_by_month' => $revenueByMonth,
+            'expense_by_month' => $expenseByMonth,
         ]);
     }
 }
