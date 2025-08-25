@@ -33,9 +33,9 @@ class OrderItemController {
         }
         switch ($method) {
             case 'GET':
-                if ($id) {
+                if (is_numeric($id)) {
                     $this->getItem($id);
-                } elseif ($parentId) {
+                } elseif (is_numeric($parentId)) {
                     $this->getItemsByOrder($parentId);
                 } else {
                     $this->getItems();
