@@ -100,6 +100,7 @@ class OrderController {
             $orders_arr[] = [
                 'id' => $row['id'],
                 'created_by' => $row['created_by'],
+                'created_user_name' => $row['created_user_name'],
                 'assigned_to' => $row['assigned_to'],
                 'assigned_user_name' => $row['assigned_user_name'],
                 'status' => $row['status'],
@@ -122,6 +123,7 @@ class OrderController {
             ResponseHelper::success('Order retrieved successfully', [
                 'id' => $row['id'],
                 'created_by' => $row['created_by'],
+                'created_user_name' => $row['created_user_name'],
                 'assigned_to' => $row['assigned_to'],
                 'assigned_user_name' => $row['assigned_user_name'],
                 'status' => $row['status'],
