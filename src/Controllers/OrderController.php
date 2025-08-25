@@ -43,7 +43,7 @@ class OrderController {
         }
         switch ($method) {
             case 'GET':
-                if ($id) {
+                if (is_numeric($id)) {
                     $this->getOrder($id);
                 } else {
                     $this->getOrders();
