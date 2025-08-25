@@ -17,13 +17,14 @@ class Order {
     public $created_at;
     public $completed_at;
     public $assigned_user_name;
+    public $created_user_name;
 
     public function __construct(PDO $db) {
         $this->conn = $db;
     }
 
     public function readAll(array $filters = [], int $limit = 30, ?int $cursor = null) {
-        $query = "SELECT o.id, o.created_by, o.assigned_to, u.name AS assigned_user_name, o.status, o.created_at, o.completed_at FROM " . $this->table_name . " o LEFT JOIN users u ON o.assigned_to = u.id";
+        $query = "SELECT o.id, o.created_by, c.name AS created_user_name, o.assigned_to, u.name AS assigned_user_name, o.status, o.created_at, o.completed_at FROM " . $this->table_name . " o LEFT JOIN users u ON o.assigned_to = u.id LEFT JOIN users c ON o.created_by = c.id";
         $conditions = [];
         $params = [];
 
@@ -57,7 +58,7 @@ class Order {
     }
 
     public function readOne() {
-        $query = "SELECT o.id, o.created_by, o.assigned_to, u.name AS assigned_user_name, o.status, o.created_at, o.completed_at FROM " . $this->table_name . " o LEFT JOIN users u ON o.assigned_to = u.id WHERE o.id = ? LIMIT 1";
+        $query = "SELECT o.id, o.created_by, c.name AS created_user_name, o.assigned_to, u.name AS assigned_user_name, o.status, o.created_at, o.completed_at FROM " . $this->table_name . " o LEFT JOIN users u ON o.assigned_to = u.id LEFT JOIN users c ON o.created_by = c.id WHERE o.id = ? LIMIT 1";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(1, $this->id);
         $stmt->execute();
