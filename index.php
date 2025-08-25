@@ -32,7 +32,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
-$path = isset($_SERVER['REQUEST_URI']) ? trim($_SERVER['REQUEST_URI'], '/') : '';
+$requestUri = $_SERVER['REQUEST_URI'] ?? '';
+// Remove any query string from the request URI before splitting into segments
+$path = trim(parse_url($requestUri, PHP_URL_PATH), '/');
 $segments = explode('/', $path);
 
 $resource = $segments[0] ?? null;
