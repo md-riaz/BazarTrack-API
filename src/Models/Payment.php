@@ -11,6 +11,7 @@ class Payment {
 
     public $id;
     public $user_id;
+    public $owner_id;
     public $amount;
     public $type; // e.g., "credit", "debit"
     public $created_at;
@@ -20,12 +21,16 @@ class Payment {
     }
 
     public function readAll(array $filters = [], int $limit = 30, ?int $cursor = null) {
-        $query = "SELECT id, user_id, amount, type, created_at FROM " . $this->table_name;
+        $query = "SELECT id, user_id, owner_id, amount, type, created_at FROM " . $this->table_name;
         $conditions = [];
         $params = [];
         if (isset($filters['user_id'])) {
             $conditions[] = "user_id = :user_id";
             $params[':user_id'] = $filters['user_id'];
+        }
+        if (isset($filters['owner_id'])) {
+            $conditions[] = "owner_id = :owner_id";
+            $params[':owner_id'] = $filters['owner_id'];
         }
         if (isset($filters['type'])) {
             $conditions[] = "type = :type";
@@ -57,13 +62,15 @@ class Payment {
     }
 
     public function create() {
-        $query = "INSERT INTO " . $this->table_name . " SET user_id = :user_id, amount = :amount, type = :type, created_at = :created_at";
+        $query = "INSERT INTO " . $this->table_name . " SET user_id = :user_id, owner_id = :owner_id, amount = :amount, type = :type, created_at = :created_at";
         $stmt = $this->conn->prepare($query);
         $this->user_id = htmlspecialchars(strip_tags($this->user_id));
+        $this->owner_id = htmlspecialchars(strip_tags($this->owner_id));
         $this->amount = htmlspecialchars(strip_tags($this->amount));
         $this->type = htmlspecialchars(strip_tags($this->type));
         $this->created_at = htmlspecialchars(strip_tags($this->created_at));
         $stmt->bindParam(':user_id', $this->user_id);
+        $stmt->bindParam(':owner_id', $this->owner_id);
         $stmt->bindParam(':amount', $this->amount);
         $stmt->bindParam(':type', $this->type);
         $stmt->bindParam(':created_at', $this->created_at);
