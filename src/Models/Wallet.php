@@ -16,6 +16,14 @@ class Wallet {
         $this->conn = $db;
     }
 
+    public function create(int $userId): bool
+    {
+        $query = "INSERT INTO {$this->table_name} (user_id, balance) VALUES (:user_id, 0)";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':user_id', $userId);
+        return $stmt->execute();
+    }
+
     public function getBalance($user_id) {
         $query = "SELECT balance FROM " . $this->table_name . " WHERE user_id = ? LIMIT 1";
         $stmt = $this->conn->prepare($query);
