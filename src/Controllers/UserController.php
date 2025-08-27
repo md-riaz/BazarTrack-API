@@ -102,6 +102,12 @@ class UserController {
 
         $this->user->name = $data['name'];
         $this->user->email = $data['email'];
+
+        if ($this->user->emailExists()) {
+            ResponseHelper::error(409, 'Email already exists.');
+            return;
+        }
+
         $this->user->password = password_hash($data['password'], PASSWORD_DEFAULT);
         $this->user->role = $role;
         if ($this->user->create()) {
