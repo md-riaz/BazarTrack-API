@@ -5,6 +5,7 @@ namespace App\Controllers;
 
 use App\Core\Database;
 use App\Models\User;
+use App\Models\Wallet;
 use App\Core\ResponseHelper;
 use App\Core\Validator;
 use PDO;
@@ -111,6 +112,10 @@ class UserController {
         $this->user->password = password_hash($data['password'], PASSWORD_DEFAULT);
         $this->user->role = $role;
         if ($this->user->create()) {
+            if ($role === 'assistant') {
+                $wallet = new Wallet($this->db);
+                $wallet->create($this->user->id);
+            }
             ResponseHelper::success('User created successfully', [
                 'id' => $this->user->id,
                 'name' => $this->user->name,
