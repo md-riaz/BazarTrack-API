@@ -62,6 +62,14 @@ class User {
         return $stmt;
     }
 
+    public function emailExists() {
+        $query = "SELECT id FROM " . $this->table_name . " WHERE email = ? LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(1, $this->email);
+        $stmt->execute();
+        return $stmt->rowCount() > 0;
+    }
+
     public function create() {
         $query = "INSERT INTO " . $this->table_name . " SET name = :name, email = :email, password = :password, role = :role";
         $stmt = $this->conn->prepare($query);
