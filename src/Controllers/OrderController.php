@@ -75,6 +75,7 @@ class OrderController {
     private function getOrders() {
         $status = $_GET['status'] ?? null;
         $assignedToRaw = $_GET['assigned_to'] ?? null;
+        $ownerIdRaw = $_GET['owner_id'] ?? null;
 
         $filters = [];
         if ($status !== null) {
@@ -92,6 +93,13 @@ class OrderController {
                 }
                 $filters['assigned_to'] = (int)$assignedToRaw;
             }
+        }
+        if ($ownerIdRaw !== null && $ownerIdRaw !== '') {
+            if (!Validator::validateInt($ownerIdRaw)) {
+                ResponseHelper::error(400, 'Invalid owner_id.');
+                return;
+            }
+            $filters['owner_id'] = (int)$ownerIdRaw;
         }
         [$limit, $cursor] = \App\Core\Pagination::getParams();
         $stmt = $this->order->readAll($filters, $limit, $cursor);

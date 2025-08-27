@@ -65,10 +65,12 @@ CREATE TABLE IF NOT EXISTS transactions (
 CREATE TABLE IF NOT EXISTS payments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
+    owner_id INT NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
     type VARCHAR(50) NOT NULL,
     created_at DATETIME NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (owner_id) REFERENCES users(id)
 );
 
 -- History logs table
@@ -112,9 +114,9 @@ INSERT INTO transactions (user_id, amount, type, created_at) VALUES
     (3, 50.00, 'credit', '2025-01-05 10:00:00');
 
 -- Seed payments
-INSERT INTO payments (user_id, amount, type, created_at) VALUES
-    (2, 25.00, 'wallet', '2025-01-05 09:00:00'),
-    (3, 50.00, 'wallet', '2025-01-05 10:00:00');
+INSERT INTO payments (user_id, owner_id, amount, type, created_at) VALUES
+    (2, 2, 25.00, 'wallet', '2025-01-05 09:00:00'),
+    (3, 2, 50.00, 'wallet', '2025-01-05 10:00:00');
 
 -- Seed history logs
 INSERT INTO history_logs (entity_type, entity_id, action, changed_by_user_id, timestamp, data_snapshot) VALUES

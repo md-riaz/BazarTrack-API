@@ -23,13 +23,18 @@ class AnalyticsController {
         $stmt = $this->db->query("SELECT COUNT(*) AS total FROM users");
         $totalUsers = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM orders");
+        $ownerId = AuthMiddleware::$userId;
+
+        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM orders WHERE created_by = ?");
+        $stmt->execute([$ownerId]);
         $totalOrders = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-        $stmt = $this->db->query("SELECT COUNT(*) AS total FROM payments");
+        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM payments WHERE owner_id = ?");
+        $stmt->execute([$ownerId]);
         $totalPayments = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-        $stmt = $this->db->query("SELECT COALESCE(SUM(amount),0) AS total FROM payments WHERE type = 'debit'");
+        $stmt = $this->db->prepare("SELECT COALESCE(SUM(amount),0) AS total FROM payments WHERE type = 'debit' AND owner_id = ?");
+        $stmt->execute([$ownerId]);
         $totalExpense = (float)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
         ResponseHelper::success('Dashboard analytics retrieved successfully', [
@@ -44,18 +49,24 @@ class AnalyticsController {
         if (!AuthMiddleware::check()) {
             return;
         }
-        $ordersStmt = $this->db->query(
-            "SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, COUNT(*) AS count " .
-            "FROM orders GROUP BY month ORDER BY month"
+        $ownerId = AuthMiddleware::$userId;
+        $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $monthExpr = $driver === 'mysql'
+            ? "DATE_FORMAT(created_at, '%Y-%m')"
+            : "strftime('%Y-%m', created_at)";
+        $start = date('Y-m-01 00:00:00', strtotime('-5 months'));
+
+        $ordersStmt = $this->db->prepare(
+            "SELECT $monthExpr AS month, COUNT(*) AS count FROM orders WHERE created_by = ? AND created_at >= ? GROUP BY month ORDER BY month"
         );
+        $ordersStmt->execute([$ownerId, $start]);
         $ordersByMonth = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $expenseStmt = $this->db->query(
-            "SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, " .
-            "SUM(amount) AS expense FROM payments WHERE type = 'debit' GROUP BY month ORDER BY month"
+        $expenseStmt = $this->db->prepare(
+            "SELECT $monthExpr AS month, SUM(amount) AS expense FROM payments WHERE type = 'debit' AND owner_id = ? AND created_at >= ? GROUP BY month ORDER BY month"
         );
+        $expenseStmt->execute([$ownerId, $start]);
         $expenseByMonth = $expenseStmt->fetchAll(PDO::FETCH_ASSOC);
-
         ResponseHelper::success('Monthly reports retrieved successfully', [
             'orders_by_month' => $ordersByMonth,
             'expense_by_month' => $expenseByMonth
@@ -67,29 +78,32 @@ class AnalyticsController {
             return;
         }
 
-        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM orders WHERE assigned_to = ?");
-        $stmt->execute([$userId]);
+        $ownerId = AuthMiddleware::$userId;
+
+        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM orders WHERE assigned_to = ? AND created_by = ?");
+        $stmt->execute([$userId, $ownerId]);
         $totalOrders = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-        $stmt = $this->db->prepare("SELECT COALESCE(SUM(amount),0) AS total FROM payments WHERE user_id = ? AND type = 'debit'");
-        $stmt->execute([$userId]);
+        $stmt = $this->db->prepare("SELECT COALESCE(SUM(amount),0) AS total FROM payments WHERE user_id = ? AND type = 'debit' AND owner_id = ?");
+        $stmt->execute([$userId, $ownerId]);
         $totalExpense = (float)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
         $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
         $monthExpr = $driver === 'mysql'
             ? "DATE_FORMAT(created_at, '%Y-%m')"
             : "strftime('%Y-%m', created_at)";
+        $start = date('Y-m-01 00:00:00', strtotime('-5 months'));
 
         $ordersStmt = $this->db->prepare(
-            "SELECT $monthExpr AS month, COUNT(*) AS count FROM orders WHERE assigned_to = ? GROUP BY month ORDER BY month"
+            "SELECT $monthExpr AS month, COUNT(*) AS count FROM orders WHERE assigned_to = ? AND created_by = ? AND created_at >= ? GROUP BY month ORDER BY month"
         );
-        $ordersStmt->execute([$userId]);
+        $ordersStmt->execute([$userId, $ownerId, $start]);
         $ordersByMonth = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
 
         $expenseStmt = $this->db->prepare(
-            "SELECT $monthExpr AS month, COALESCE(SUM(amount),0) AS expense FROM payments WHERE user_id = ? AND type = 'debit' GROUP BY month ORDER BY month"
+            "SELECT $monthExpr AS month, COALESCE(SUM(amount),0) AS expense FROM payments WHERE user_id = ? AND type = 'debit' AND owner_id = ? AND created_at >= ? GROUP BY month ORDER BY month"
         );
-        $expenseStmt->execute([$userId]);
+        $expenseStmt->execute([$userId, $ownerId, $start]);
         $expenseByMonth = $expenseStmt->fetchAll(PDO::FETCH_ASSOC);
 
         ResponseHelper::success('Assistant analytics retrieved successfully', [

@@ -52,6 +52,13 @@ class PaymentController {
             }
             $filters['user_id'] = (int)$_GET['user_id'];
         }
+        if (isset($_GET['owner_id'])) {
+            if (!Validator::validateInt($_GET['owner_id'])) {
+                ResponseHelper::error(400, 'Invalid owner_id.');
+                return;
+            }
+            $filters['owner_id'] = (int)$_GET['owner_id'];
+        }
         if (isset($_GET['type'])) {
             $filters['type'] = $_GET['type'];
         }
@@ -69,6 +76,7 @@ class PaymentController {
             $payments_arr[] = [
                 'id' => $row['id'],
                 'user_id' => $row['user_id'],
+                'owner_id' => $row['owner_id'],
                 'amount' => $row['amount'],
                 'type' => $row['type'],
                 'created_at' => $row['created_at'],
@@ -100,18 +108,28 @@ class PaymentController {
         }
 
         $guard = new RoleGuard();
-        if ($data['type'] === 'credit' && !$guard->checkRole(AuthMiddleware::$userId, ['owner'])) {
-            ResponseHelper::error(403, 'Only owners can credit wallets.');
-            return;
-        }
-        if ($data['type'] === 'debit' && !$guard->checkRole(AuthMiddleware::$userId, ['assistant'])) {
-            ResponseHelper::error(403, 'Only assistants can record expenses.');
-            return;
+        if ($data['type'] === 'credit') {
+            if (!$guard->checkRole(AuthMiddleware::$userId, ['owner'])) {
+                ResponseHelper::error(403, 'Only owners can credit wallets.');
+                return;
+            }
+            $ownerId = AuthMiddleware::$userId;
+        } else {
+            if (!$guard->checkRole(AuthMiddleware::$userId, ['assistant'])) {
+                ResponseHelper::error(403, 'Only assistants can record expenses.');
+                return;
+            }
+            if (empty($data['owner_id']) || !Validator::validateInt($data['owner_id'])) {
+                ResponseHelper::error(400, 'owner_id is required.');
+                return;
+            }
+            $ownerId = (int)$data['owner_id'];
         }
 
         $wallet = new Wallet($this->db);
 
         $this->payment->user_id = $data['user_id'];
+        $this->payment->owner_id = $ownerId;
         $this->payment->amount = $data['amount'];
         $this->payment->type = $data['type'];
         $this->payment->created_at = TIMESTAMP;
@@ -124,6 +142,7 @@ class PaymentController {
             ResponseHelper::success('Payment created successfully', [
                 'id' => $this->payment->id,
                 'user_id' => $this->payment->user_id,
+                'owner_id' => $this->payment->owner_id,
                 'amount' => $this->payment->amount,
                 'type' => $this->payment->type,
                 'created_at' => $this->payment->created_at,

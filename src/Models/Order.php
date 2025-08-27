@@ -40,6 +40,10 @@ class Order {
                 $params[':assigned_to'] = $filters['assigned_to'];
             }
         }
+        if (isset($filters['owner_id'])) {
+            $conditions[] = "o.created_by = :owner_id";
+            $params[':owner_id'] = $filters['owner_id'];
+        }
         if ($cursor !== null) {
             $conditions[] = "o.id < :cursor";
             $params[':cursor'] = $cursor;
