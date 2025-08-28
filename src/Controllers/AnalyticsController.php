@@ -33,7 +33,7 @@ class AnalyticsController {
         $stmt->execute([$ownerId]);
         $totalPayments = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-        $stmt = $this->db->prepare("SELECT COALESCE(SUM(amount),0) AS total FROM payments WHERE type = 'debit' AND owner_id = ?");
+        $stmt = $this->db->prepare("SELECT COALESCE(SUM(amount),0) AS total FROM payments WHERE type = 'credit' AND owner_id = ?");
         $stmt->execute([$ownerId]);
         $totalExpense = (float)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
