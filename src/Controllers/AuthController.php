@@ -99,4 +99,50 @@ class AuthController {
 
         ResponseHelper::success('Token refreshed successfully', ['token' => $newValue]);
     }
+
+    public function updatePassword() {
+        if (!AuthMiddleware::check()) {
+            return;
+        }
+
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        if (empty($data['current_password']) || empty($data['new_password'])) {
+            ResponseHelper::error(400, 'Current and new passwords are required.');
+            return;
+        }
+
+        if (strlen($data['new_password']) < 6) {
+            ResponseHelper::error(400, 'New password must be at least 6 characters long.');
+            return;
+        }
+
+        $userId = AuthMiddleware::$userId;
+
+        $stmt = $this->db->prepare('SELECT password FROM users WHERE id = ? LIMIT 1');
+        $stmt->bindParam(1, $userId);
+        $stmt->execute();
+
+        if ($stmt->rowCount() !== 1) {
+            ResponseHelper::error(404, 'User not found.');
+            return;
+        }
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!password_verify($data['current_password'], $row['password'])) {
+            ResponseHelper::error(400, 'Current password is incorrect.');
+            return;
+        }
+
+        $newHash = password_hash($data['new_password'], PASSWORD_DEFAULT);
+        $updateStmt = $this->db->prepare('UPDATE users SET password = ? WHERE id = ?');
+        $updateStmt->bindParam(1, $newHash);
+        $updateStmt->bindParam(2, $userId);
+
+        if ($updateStmt->execute()) {
+            ResponseHelper::success('Password updated successfully');
+        } else {
+            ResponseHelper::error(500, 'Unable to update password.');
+        }
+    }
 }
