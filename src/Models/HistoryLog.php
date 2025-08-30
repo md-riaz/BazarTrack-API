@@ -15,6 +15,7 @@ class HistoryLog {
     public $entity_id;
     public $action;
     public $changed_by_user_id;
+    public $changed_by_user_name;
     public $timestamp;
     public $data_snapshot;
 
@@ -23,11 +24,11 @@ class HistoryLog {
     }
 
     public function readAll(int $limit = 30, ?int $cursor = null) {
-        $query = "SELECT id, entity_type, entity_id, action, changed_by_user_id, timestamp, data_snapshot FROM " . $this->table_name;
+        $query = "SELECT h.id, h.entity_type, h.entity_id, h.action, h.changed_by_user_id, u.name AS changed_by_user_name, h.timestamp, h.data_snapshot FROM " . $this->table_name . " h LEFT JOIN users u ON h.changed_by_user_id = u.id";
         if ($cursor !== null) {
-            $query .= " WHERE id < :cursor";
+            $query .= " WHERE h.id < :cursor";
         }
-        $query .= " ORDER BY id DESC LIMIT :limit";
+        $query .= " ORDER BY h.id DESC LIMIT :limit";
         $stmt = $this->conn->prepare($query);
         if ($cursor !== null) {
             $stmt->bindValue(':cursor', $cursor, PDO::PARAM_INT);
@@ -38,11 +39,11 @@ class HistoryLog {
     }
 
     public function readByUser($userId, int $limit = 30, ?int $cursor = null) {
-        $query = "SELECT id, entity_type, entity_id, action, changed_by_user_id, timestamp, data_snapshot FROM " . $this->table_name . " WHERE changed_by_user_id = :user_id";
+        $query = "SELECT h.id, h.entity_type, h.entity_id, h.action, h.changed_by_user_id, u.name AS changed_by_user_name, h.timestamp, h.data_snapshot FROM " . $this->table_name . " h LEFT JOIN users u ON h.changed_by_user_id = u.id WHERE h.changed_by_user_id = :user_id";
         if ($cursor !== null) {
-            $query .= " AND id < :cursor";
+            $query .= " AND h.id < :cursor";
         }
-        $query .= " ORDER BY id DESC LIMIT :limit";
+        $query .= " ORDER BY h.id DESC LIMIT :limit";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
         if ($cursor !== null) {
@@ -54,11 +55,11 @@ class HistoryLog {
     }
 
     public function readByEntityType(int $limit = 30, ?int $cursor = null) {
-        $query = "SELECT id, entity_type, entity_id, action, changed_by_user_id, timestamp, data_snapshot FROM " . $this->table_name . " WHERE entity_type = :entity_type";
+        $query = "SELECT h.id, h.entity_type, h.entity_id, h.action, h.changed_by_user_id, u.name AS changed_by_user_name, h.timestamp, h.data_snapshot FROM " . $this->table_name . " h LEFT JOIN users u ON h.changed_by_user_id = u.id WHERE h.entity_type = :entity_type";
         if ($cursor !== null) {
-            $query .= " AND id < :cursor";
+            $query .= " AND h.id < :cursor";
         }
-        $query .= " ORDER BY id DESC LIMIT :limit";
+        $query .= " ORDER BY h.id DESC LIMIT :limit";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':entity_type', $this->entity_type, PDO::PARAM_STR);
         if ($cursor !== null) {
@@ -70,11 +71,11 @@ class HistoryLog {
     }
 
     public function readByEntity(int $limit = 30, ?int $cursor = null) {
-        $query = "SELECT id, entity_type, entity_id, action, changed_by_user_id, timestamp, data_snapshot FROM " . $this->table_name . " WHERE entity_type = :entity_type AND entity_id = :entity_id";
+        $query = "SELECT h.id, h.entity_type, h.entity_id, h.action, h.changed_by_user_id, u.name AS changed_by_user_name, h.timestamp, h.data_snapshot FROM " . $this->table_name . " h LEFT JOIN users u ON h.changed_by_user_id = u.id WHERE h.entity_type = :entity_type AND h.entity_id = :entity_id";
         if ($cursor !== null) {
-            $query .= " AND id < :cursor";
+            $query .= " AND h.id < :cursor";
         }
-        $query .= " ORDER BY id DESC LIMIT :limit";
+        $query .= " ORDER BY h.id DESC LIMIT :limit";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':entity_type', $this->entity_type, PDO::PARAM_STR);
         $stmt->bindParam(':entity_id', $this->entity_id, PDO::PARAM_INT);

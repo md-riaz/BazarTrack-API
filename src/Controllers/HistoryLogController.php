@@ -74,6 +74,7 @@ class HistoryLogController {
                 'entity_id' => $row['entity_id'],
                 'action' => $row['action'],
                 'changed_by_user_id' => $row['changed_by_user_id'],
+                'changed_by_user_name' => $row['changed_by_user_name'],
                 'timestamp' => $row['timestamp'],
                 'data_snapshot' => json_decode($row['data_snapshot']),
             ];
@@ -93,6 +94,7 @@ class HistoryLogController {
                 'entity_id' => $row['entity_id'],
                 'action' => $row['action'],
                 'changed_by_user_id' => $row['changed_by_user_id'],
+                'changed_by_user_name' => $row['changed_by_user_name'],
                 'timestamp' => $row['timestamp'],
                 'data_snapshot' => json_decode($row['data_snapshot']),
             ];
@@ -113,6 +115,7 @@ class HistoryLogController {
                 'entity_id' => $row['entity_id'],
                 'action' => $row['action'],
                 'changed_by_user_id' => $row['changed_by_user_id'],
+                'changed_by_user_name' => $row['changed_by_user_name'],
                 'timestamp' => $row['timestamp'],
                 'data_snapshot' => json_decode($row['data_snapshot']),
             ];
@@ -141,12 +144,18 @@ class HistoryLogController {
         $this->log->timestamp = TIMESTAMP;
         $this->log->data_snapshot = $data['data_snapshot'];
         if ($this->log->create()) {
+            $stmt = $this->db->prepare('SELECT name FROM users WHERE id = ? LIMIT 1');
+            $stmt->bindParam(1, $this->log->changed_by_user_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $changedByUserName = $stmt->fetch(PDO::FETCH_COLUMN) ?: null;
+
             ResponseHelper::success('History log created successfully', [
                 'id' => $this->log->id,
                 'entity_type' => $this->log->entity_type,
                 'entity_id' => $this->log->entity_id,
                 'action' => $this->log->action,
                 'changed_by_user_id' => $this->log->changed_by_user_id,
+                'changed_by_user_name' => $changedByUserName,
                 'timestamp' => $this->log->timestamp,
                 'data_snapshot' => $this->log->data_snapshot,
             ], 201);
