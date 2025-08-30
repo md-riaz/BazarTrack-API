@@ -76,6 +76,13 @@ switch ($resource) {
                         ResponseHelper::error(405, 'Method not allowed.');
                     }
                     break;
+                case 'password':
+                    if ($method === 'PUT') {
+                        $auth->updatePassword();
+                    } else {
+                        ResponseHelper::error(405, 'Method not allowed.');
+                    }
+                    break;
                 default:
                     ResponseHelper::error(404, 'Endpoint not found.');
                     break;
