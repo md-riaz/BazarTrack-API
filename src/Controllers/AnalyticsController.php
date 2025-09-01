@@ -73,6 +73,36 @@ class AnalyticsController {
         ]);
     }
 
+    public function assistantDashboard() {
+        if (!AuthMiddleware::check()) {
+            return;
+        }
+        if (AuthMiddleware::$role !== 'assistant') {
+            ResponseHelper::error(403, 'Unauthorized');
+            return;
+        }
+
+        $assistantId = AuthMiddleware::$userId;
+
+        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM orders WHERE assigned_to = ?");
+        $stmt->execute([$assistantId]);
+        $totalOrders = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM payments WHERE user_id = ?");
+        $stmt->execute([$assistantId]);
+        $totalPayments = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        $stmt = $this->db->prepare("SELECT COALESCE(SUM(amount),0) AS total FROM transactions WHERE type = 'debit' AND user_id = ?");
+        $stmt->execute([$assistantId]);
+        $totalExpense = (float)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        ResponseHelper::success('Assistant dashboard analytics retrieved successfully', [
+            'total_orders' => $totalOrders,
+            'total_payments' => $totalPayments,
+            'total_expense' => $totalExpense,
+        ]);
+    }
+
     public function assistantSummary($userId) {
         if (!AuthMiddleware::check()) {
             return;
