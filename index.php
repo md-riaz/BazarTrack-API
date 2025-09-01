@@ -159,6 +159,8 @@ switch ($resource) {
                 $analyticsController->dashboard();
             } elseif ($third === 'reports' && $method === 'GET') {
                 $analyticsController->reports();
+            } elseif ($third === 'assistant' && $method === 'GET') {
+                $analyticsController->assistantDashboard();
             } elseif ($third === 'assistants' && $fourth && $method === 'GET') {
                 $analyticsController->assistantSummary($fourth);
             } else {

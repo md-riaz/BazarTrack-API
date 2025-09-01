@@ -73,6 +73,55 @@ class AnalyticsController {
         ]);
     }
 
+    public function assistantDashboard() {
+        if (!AuthMiddleware::check()) {
+            return;
+        }
+        if (AuthMiddleware::$role !== 'assistant') {
+            ResponseHelper::error(403, 'Unauthorized');
+            return;
+        }
+
+        $assistantId = AuthMiddleware::$userId;
+
+        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM orders WHERE assigned_to = ?");
+        $stmt->execute([$assistantId]);
+        $totalOrders = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM payments WHERE user_id = ?");
+        $stmt->execute([$assistantId]);
+        $totalPayments = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        $stmt = $this->db->prepare("SELECT COALESCE(SUM(amount),0) AS total FROM transactions WHERE type = 'debit' AND user_id = ?");
+        $stmt->execute([$assistantId]);
+        $totalExpense = (float)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $monthExpr = $driver === 'mysql'
+            ? "DATE_FORMAT(created_at, '%Y-%m')"
+            : "strftime('%Y-%m', created_at)";
+        $start = date('Y-m-01 00:00:00', strtotime('-5 months'));
+
+        $ordersStmt = $this->db->prepare(
+            "SELECT $monthExpr AS month, COUNT(*) AS count FROM orders WHERE assigned_to = ? AND created_at >= ? GROUP BY month ORDER BY month"
+        );
+        $ordersStmt->execute([$assistantId, $start]);
+        $ordersByMonth = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $expenseStmt = $this->db->prepare(
+            "SELECT $monthExpr AS month, COALESCE(SUM(amount),0) AS expense FROM transactions WHERE type = 'debit' AND user_id = ? AND created_at >= ? GROUP BY month ORDER BY month"
+        );
+        $expenseStmt->execute([$assistantId, $start]);
+        $expenseByMonth = $expenseStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        ResponseHelper::success('Assistant dashboard analytics retrieved successfully', [
+            'total_orders' => $totalOrders,
+            'total_payments' => $totalPayments,
+            'total_expense' => $totalExpense,
+            'orders_by_month' => $ordersByMonth,
+            'expense_by_month' => $expenseByMonth,
+        ]);
+    }
+
     public function assistantSummary($userId) {
         if (!AuthMiddleware::check()) {
             return;
