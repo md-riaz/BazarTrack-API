@@ -14,6 +14,7 @@ The API supports an owner–assistant purchasing workflow. The list below shows 
 ### Assistant dashboard
 - **Assigned orders** – `GET /api/orders` with client-side filtering by `assigned_to`, `owner_id`, or `status`.
 - **Wallet balance** – `GET /api/wallet/{assistant_id}`.
+- **Dashboard stats** – `GET /api/analytics/assistant`.
 
 ### Purchase entry / order detail
 - **Update item status and costs** – `PUT /api/order_items/{order_id}/{item_id}`.
@@ -36,6 +37,7 @@ The API supports an owner–assistant purchasing workflow. The list below shows 
 
 ### Dashboards & Analytics
 - **Owner Dashboard stats** – Overall counts and expense figures come from GET /api/analytics/dashboard; monthly breakdowns are available via GET /api/analytics/reports
+- **Assistant Dashboard stats** – Assistants can view their totals with GET /api/analytics/assistant
 
 ### Example flow
 1. Owner creates an order – `POST /api/orders`.
