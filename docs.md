@@ -37,7 +37,7 @@ The API supports an owner–assistant purchasing workflow. The list below shows 
 
 ### Dashboards & Analytics
 - **Owner Dashboard stats** – Overall counts and expense figures come from GET /api/analytics/dashboard; monthly breakdowns are available via GET /api/analytics/reports
-- **Assistant Dashboard stats** – Assistants can view their totals with GET /api/analytics/assistant
+- **Assistant Dashboard stats** – Assistants can view their totals and monthly summaries with GET /api/analytics/assistant
 
 ### Example flow
 1. Owner creates an order – `POST /api/orders`.
@@ -665,6 +665,26 @@ Return monthly order counts and expense totals for the last six months.
     "expense": 1000.0
   }
 ]
+```
+
+### `GET /api/analytics/assistant`
+Return order, payment, and expense totals for the authenticated assistant along with monthly trends for the last six months.
+
+**Response**
+```json
+{
+  "total_orders": 5,
+  "total_payments": 3,
+  "total_expense": 250.0,
+  "orders_by_month": [
+    { "month": "2024-01", "count": 3 },
+    { "month": "2024-02", "count": 2 }
+  ],
+  "expense_by_month": [
+    { "month": "2024-01", "expense": 150.0 },
+    { "month": "2024-02", "expense": 100.0 }
+  ]
+}
 ```
 
 ### `GET /api/analytics/assistants/{id}`
