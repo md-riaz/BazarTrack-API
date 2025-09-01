@@ -95,6 +95,7 @@ class AnalyticsController {
         $stmt = $this->db->prepare("SELECT COALESCE(SUM(amount),0) AS total FROM transactions WHERE type = 'debit' AND user_id = ?");
         $stmt->execute([$assistantId]);
         $totalExpense = (float)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
         $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
         $monthExpr = $driver === 'mysql'
             ? "DATE_FORMAT(created_at, '%Y-%m')"
