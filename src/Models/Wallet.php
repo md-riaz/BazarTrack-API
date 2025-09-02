@@ -32,14 +32,39 @@ class Wallet {
         return $stmt;
     }
 
-    public function readTransactions($user_id, int $limit = 30, ?int $cursor = null) {
+    public function readTransactions(
+        $user_id,
+        int $limit = 30,
+        ?int $cursor = null,
+        ?string $type = null,
+        ?string $from = null,
+        ?string $to = null
+    ) {
         $query = "SELECT id, user_id, amount, type, created_at FROM transactions WHERE user_id = :user_id";
+        if ($type !== null) {
+            $query .= " AND type = :type";
+        }
+        if ($from !== null) {
+            $query .= " AND created_at >= :from";
+        }
+        if ($to !== null) {
+            $query .= " AND created_at <= :to";
+        }
         if ($cursor !== null) {
             $query .= " AND id < :cursor";
         }
         $query .= " ORDER BY id DESC LIMIT :limit";
         $stmt = $this->conn->prepare($query);
         $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+        if ($type !== null) {
+            $stmt->bindValue(':type', $type);
+        }
+        if ($from !== null) {
+            $stmt->bindValue(':from', $from);
+        }
+        if ($to !== null) {
+            $stmt->bindValue(':to', $to);
+        }
         if ($cursor !== null) {
             $stmt->bindValue(':cursor', $cursor, PDO::PARAM_INT);
         }
