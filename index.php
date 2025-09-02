@@ -17,6 +17,7 @@ use App\Controllers\PaymentController;
 use App\Controllers\WalletController;
 use App\Controllers\AnalyticsController;
 use App\Controllers\AssistantController;
+use App\Controllers\OwnerController;
 use App\Controllers\UserController;
 use App\Core\ResponseHelper;
 
@@ -178,6 +179,12 @@ switch ($resource) {
         if ($second === 'assistants') {
             $assistantController = new AssistantController();
             $assistantController->processRequest($method);
+            break;
+        }
+        // /api/owners
+        if ($second === 'owners') {
+            $ownerController = new OwnerController();
+            $ownerController->processRequest($method);
             break;
         }
         // Fallback

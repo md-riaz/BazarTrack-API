@@ -739,4 +739,25 @@ List assistant users.
 
 ---
 
+## Owners
+
+### `GET /api/owners`
+List owner users.
+
+**Query parameters**
+- `limit` – number of records to return (max 30).
+- `cursor` – return records with IDs less than this value.
+
+**Response**
+```json
+[
+  {
+    "id": 1,
+    "name": "Owner Jane"
+  }
+]
+```
+
+---
+
 All timestamps follow the `YYYY-MM-DD HH:MM:SS` format and are generated using the `Asia/Dhaka` timezone. Endpoints may return standard HTTP error codes for validation or authorization failures. Error bodies follow the structure shown above.
