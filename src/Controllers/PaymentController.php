@@ -102,19 +102,25 @@ class PaymentController {
             return;
         }
 
-        if (!in_array($data['type'], ['credit', 'debit'], true)) {
+        if (!in_array($data['type'], ['credit', 'debit', 'wallet'], true)) {
             ResponseHelper::error(400, 'Invalid type.');
             return;
         }
 
         $guard = new RoleGuard();
+        $wallet = new Wallet($this->db);
+
         if ($data['type'] === 'credit') {
             if (!$guard->checkRole(AuthMiddleware::$userId, ['owner'])) {
                 ResponseHelper::error(403, 'Only owners can credit wallets.');
                 return;
             }
             $ownerId = AuthMiddleware::$userId;
-        } else {
+            $paymentAmount = abs($data['amount']);
+            $paymentType = 'credit';
+            $walletDelta = $paymentAmount;
+            $transactionType = 'credit';
+        } elseif ($data['type'] === 'debit') {
             if (!$guard->checkRole(AuthMiddleware::$userId, ['assistant'])) {
                 ResponseHelper::error(403, 'Only assistants can record expenses.');
                 return;
@@ -124,20 +130,35 @@ class PaymentController {
                 return;
             }
             $ownerId = (int)$data['owner_id'];
+            $paymentAmount = abs($data['amount']);
+            $paymentType = 'debit';
+            $walletDelta = -$paymentAmount;
+            $transactionType = 'debit';
+        } else { // wallet
+            if (!$guard->checkRole(AuthMiddleware::$userId, ['assistant'])) {
+                ResponseHelper::error(403, 'Only assistants can refund via wallet.');
+                return;
+            }
+            if (empty($data['owner_id']) || !Validator::validateInt($data['owner_id'])) {
+                ResponseHelper::error(400, 'owner_id is required.');
+                return;
+            }
+            $ownerId = (int)$data['owner_id'];
+            $paymentAmount = -abs($data['amount']);
+            $paymentType = 'credit';
+            $walletDelta = -abs($data['amount']);
+            $transactionType = 'debit';
         }
-
-        $wallet = new Wallet($this->db);
 
         $this->payment->user_id = $data['user_id'];
         $this->payment->owner_id = $ownerId;
-        $this->payment->amount = $data['amount'];
-        $this->payment->type = $data['type'];
+        $this->payment->amount = $paymentAmount;
+        $this->payment->type = $paymentType;
         $this->payment->created_at = TIMESTAMP;
 
         if ($this->payment->create()) {
-            $amount = $data['type'] === 'credit' ? $data['amount'] : -$data['amount'];
-            $wallet->updateBalance($data['user_id'], $amount);
-            $wallet->addTransaction($data['user_id'], $data['amount'], $data['type'], TIMESTAMP);
+            $wallet->updateBalance($data['user_id'], $walletDelta);
+            $wallet->addTransaction($data['user_id'], abs($data['amount']), $transactionType, TIMESTAMP);
             $this->logAction('payment', $this->payment->id, 'create', AuthMiddleware::$userId, $data);
             ResponseHelper::success('Payment created successfully', [
                 'id' => $this->payment->id,
