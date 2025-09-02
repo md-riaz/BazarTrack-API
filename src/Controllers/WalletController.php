@@ -63,13 +63,34 @@ class WalletController {
             return;
         }
 
-
         if (!AuthMiddleware::check()) {
             return;
         }
 
+        $type = $_GET['type'] ?? null;
+        if ($type !== null && !in_array($type, ['credit', 'debit'], true)) {
+            ResponseHelper::error(400, 'Invalid type.');
+            return;
+        }
+
+        $fromRaw = $_GET['from'] ?? null;
+        $toRaw = $_GET['to'] ?? null;
+
+        if ($fromRaw !== null && !Validator::validateDate($fromRaw, 'Y-m-d')) {
+            ResponseHelper::error(400, 'Invalid from date.');
+            return;
+        }
+
+        if ($toRaw !== null && !Validator::validateDate($toRaw, 'Y-m-d')) {
+            ResponseHelper::error(400, 'Invalid to date.');
+            return;
+        }
+
+        $from = $fromRaw !== null ? $fromRaw . ' 00:00:00' : null;
+        $to = $toRaw !== null ? $toRaw . ' 23:59:59' : null;
+
         [$limit, $cursor] = \App\Core\Pagination::getParams();
-        $stmt = $this->wallet->readTransactions($user_id, $limit, $cursor);
+        $stmt = $this->wallet->readTransactions($user_id, $limit, $cursor, $type, $from, $to);
         $transactions_arr = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $transactions_arr[] = [
