@@ -83,9 +83,18 @@ class HistoryLogController {
     }
 
     private function getLogsByEntityType($type) {
+        $changedBy = $_GET['changed_by'] ?? null;
+        if ($changedBy !== null) {
+            if (!Validator::validateInt($changedBy)) {
+                ResponseHelper::error(400, 'Invalid user ID.');
+                return;
+            }
+            $changedBy = (int)$changedBy;
+        }
+
         $this->log->entity_type = $type;
         [$limit, $cursor] = \App\Core\Pagination::getParams();
-        $stmt = $this->log->readByEntityType($limit, $cursor);
+        $stmt = $this->log->readByEntityType($limit, $cursor, $changedBy);
         $logs_arr = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $logs_arr[] = [
@@ -103,10 +112,19 @@ class HistoryLogController {
     }
 
     private function getLogsByEntity($type, $entityId) {
+        $changedBy = $_GET['changed_by'] ?? null;
+        if ($changedBy !== null) {
+            if (!Validator::validateInt($changedBy)) {
+                ResponseHelper::error(400, 'Invalid user ID.');
+                return;
+            }
+            $changedBy = (int)$changedBy;
+        }
+
         $this->log->entity_type = $type;
         $this->log->entity_id = (int)$entityId;
         [$limit, $cursor] = \App\Core\Pagination::getParams();
-        $stmt = $this->log->readByEntity($limit, $cursor);
+        $stmt = $this->log->readByEntity($limit, $cursor, $changedBy);
         $logs_arr = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $logs_arr[] = [

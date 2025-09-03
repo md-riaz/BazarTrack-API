@@ -565,6 +565,7 @@ List all history log entries.
 List log entries for all records of a given entity type (e.g. `order`).
 
 **Query parameters**
+- `changed_by` – filter by the user id that performed the action.
 - `limit` – number of records to return (max 30).
 - `cursor` – return records with IDs less than this value.
 
@@ -586,6 +587,7 @@ List log entries for all records of a given entity type (e.g. `order`).
 List log entries related to a particular entity (e.g. `order`).
 
 **Query parameters**
+- `changed_by` – filter by the user id that performed the action.
 - `limit` – number of records to return (max 30).
 - `cursor` – return records with IDs less than this value.
 
