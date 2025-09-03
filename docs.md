@@ -456,7 +456,9 @@ List recorded payments.
   {
     "id": 1,
     "user_id": 2,
+    "assistant_name": "Jane Doe",
     "owner_id": 1,
+    "owner_name": "John Owner",
     "amount": 100.0,
     "type": "credit",
     "created_at": "2024-01-03 08:00:00"
@@ -472,7 +474,9 @@ Record a payment or expense.
 {
   "id": 2,
   "user_id": 2,
+  "assistant_name": "Jane Doe",
   "owner_id": 1,
+  "owner_name": "John Owner",
   "amount": 50.0,
   "type": "debit",
   "created_at": "2024-01-03 10:00:00"
