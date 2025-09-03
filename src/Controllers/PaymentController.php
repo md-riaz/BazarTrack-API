@@ -76,7 +76,9 @@ class PaymentController {
             $payments_arr[] = [
                 'id' => $row['id'],
                 'user_id' => $row['user_id'],
+                'assistant_name' => $row['assistant_name'],
                 'owner_id' => $row['owner_id'],
+                'owner_name' => $row['owner_name'],
                 'amount' => $row['amount'],
                 'type' => $row['type'],
                 'created_at' => $row['created_at'],
@@ -160,10 +162,19 @@ class PaymentController {
             $wallet->updateBalance($data['user_id'], $walletDelta);
             $wallet->addTransaction($data['user_id'], abs($data['amount']), $transactionType, TIMESTAMP);
             $this->logAction('payment', $this->payment->id, 'create', AuthMiddleware::$userId, $data);
+
+            $stmt = $this->db->prepare('SELECT name FROM users WHERE id = ? LIMIT 1');
+            $stmt->execute([$this->payment->user_id]);
+            $assistantName = $stmt->fetch(PDO::FETCH_COLUMN) ?: null;
+            $stmt->execute([$this->payment->owner_id]);
+            $ownerName = $stmt->fetch(PDO::FETCH_COLUMN) ?: null;
+
             ResponseHelper::success('Payment created successfully', [
                 'id' => $this->payment->id,
                 'user_id' => $this->payment->user_id,
+                'assistant_name' => $assistantName,
                 'owner_id' => $this->payment->owner_id,
+                'owner_name' => $ownerName,
                 'amount' => $this->payment->amount,
                 'type' => $this->payment->type,
                 'created_at' => $this->payment->created_at,

@@ -21,37 +21,37 @@ class Payment {
     }
 
     public function readAll(array $filters = [], int $limit = 30, ?int $cursor = null) {
-        $query = "SELECT id, user_id, owner_id, amount, type, created_at FROM " . $this->table_name;
+        $query = "SELECT p.id, p.user_id, u.name AS assistant_name, p.owner_id, o.name AS owner_name, p.amount, p.type, p.created_at FROM " . $this->table_name . " p LEFT JOIN users u ON p.user_id = u.id LEFT JOIN users o ON p.owner_id = o.id";
         $conditions = [];
         $params = [];
         if (isset($filters['user_id'])) {
-            $conditions[] = "user_id = :user_id";
+            $conditions[] = "p.user_id = :user_id";
             $params[':user_id'] = $filters['user_id'];
         }
         if (isset($filters['owner_id'])) {
-            $conditions[] = "owner_id = :owner_id";
+            $conditions[] = "p.owner_id = :owner_id";
             $params[':owner_id'] = $filters['owner_id'];
         }
         if (isset($filters['type'])) {
-            $conditions[] = "type = :type";
+            $conditions[] = "p.type = :type";
             $params[':type'] = $filters['type'];
         }
         if (isset($filters['from'])) {
-            $conditions[] = "created_at >= :from";
+            $conditions[] = "p.created_at >= :from";
             $params[':from'] = $filters['from'];
         }
         if (isset($filters['to'])) {
-            $conditions[] = "created_at <= :to";
+            $conditions[] = "p.created_at <= :to";
             $params[':to'] = $filters['to'];
         }
         if ($cursor !== null) {
-            $conditions[] = "id < :cursor";
+            $conditions[] = "p.id < :cursor";
             $params[':cursor'] = $cursor;
         }
         if ($conditions) {
             $query .= " WHERE " . implode(" AND ", $conditions);
         }
-        $query .= " ORDER BY id DESC LIMIT :limit";
+        $query .= " ORDER BY p.id DESC LIMIT :limit";
         $stmt = $this->conn->prepare($query);
         foreach ($params as $key => $value) {
             $stmt->bindValue($key, $value);
