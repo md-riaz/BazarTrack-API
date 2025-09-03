@@ -121,8 +121,8 @@ Endpoints annotated with **(🔒 requires token)** need this header.
 
 ### History
 - `GET /api/history` – list history logs. Supports a `changed_by` filter. **(🔒 requires token)**
-- `GET /api/history/{entity}` – logs for all instances of a given entity type. **(🔒 requires token)**
-- `GET /api/history/{entity}/{id}` – logs for a specific entity instance. **(🔒 requires token)**
+- `GET /api/history/{entity}` – logs for all instances of a given entity type. Supports a `changed_by` filter. **(🔒 requires token)**
+- `GET /api/history/{entity}/{id}` – logs for a specific entity instance. Supports a `changed_by` filter. **(🔒 requires token)**
 - `POST /api/history` – create a log entry. **(🔒 requires token)**
 - `DELETE /api/history/{id}` – delete a log entry. **(🔒 requires token)**
 
