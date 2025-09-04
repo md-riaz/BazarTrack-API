@@ -225,7 +225,9 @@ class OrderController {
             }
 
             $this->db->commit();
-            $this->logAction('order', $this->order->id, 'create', AuthMiddleware::$userId, $data);
+            $logData = $data;
+            $logData['order_id'] = $this->order->id;
+            $this->logAction('order', $this->order->id, 'create', AuthMiddleware::$userId, $logData);
             ResponseHelper::success('Order created successfully', [
                 'id' => $this->order->id,
                 'created_by' => $this->order->created_by,
