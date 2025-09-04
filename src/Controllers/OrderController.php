@@ -174,6 +174,9 @@ class OrderController {
         $this->order->created_by = AuthMiddleware::$userId;
         $this->order->assigned_to = $data['assigned_to'] ?? null;
         $this->order->status = $data['status'];
+        if ($this->order->assigned_to !== null) {
+            $this->order->status = 'assigned';
+        }
         $this->order->created_at = TIMESTAMP;
         $this->order->completed_at = null;
 

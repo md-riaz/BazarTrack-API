@@ -174,7 +174,8 @@ items can be submitted together with the order by providing an `items` array.
 **Body parameters**
 - `assigned_to` – user id of the assistant the order is assigned to (optional).
   If omitted, the order is left unassigned and an assistant may claim it later.
-- `status` – order status string (required)
+  When provided, the order status is automatically set to `assigned`.
+- `status` – order status string (required; overridden to `assigned` if `assigned_to` is provided)
 - `items` – array of order item objects (optional). Each item accepts the same
   fields as `POST /api/order_items` except for `order_id`.
 
