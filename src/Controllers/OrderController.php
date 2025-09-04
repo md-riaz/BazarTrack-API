@@ -210,7 +210,9 @@ class OrderController {
                     if (!$itemModel->create()) {
                         throw new \Exception('Unable to create order item.', 500);
                     }
-                    $this->logAction('order_item', $itemModel->id, 'create', AuthMiddleware::$userId, $item);
+                    $logData = $item;
+                    $logData['order_id'] = $this->order->id;
+                    $this->logAction('order_item', $itemModel->id, 'create', AuthMiddleware::$userId, $logData);
                     $createdItems[] = [
                         'id' => $itemModel->id,
                         'order_id' => $this->order->id,
@@ -226,7 +228,7 @@ class OrderController {
 
             $this->db->commit();
             $logData = $data;
-            $logData['order_id'] = $this->order->id;
+            $logData['id'] = $this->order->id;
             $this->logAction('order', $this->order->id, 'create', AuthMiddleware::$userId, $logData);
             ResponseHelper::success('Order created successfully', [
                 'id' => $this->order->id,
