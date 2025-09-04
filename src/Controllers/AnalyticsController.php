@@ -63,7 +63,7 @@ class AnalyticsController {
         $ordersByMonth = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
 
         $expenseStmt = $this->db->prepare(
-            "SELECT $monthExpr AS month, SUM(amount) AS expense FROM payments WHERE type = 'debit' AND owner_id = ? AND created_at >= ? GROUP BY month ORDER BY month"
+            "SELECT $monthExpr AS month, SUM(amount) AS expense FROM payments WHERE type = 'credit' AND owner_id = ? AND created_at >= ? GROUP BY month ORDER BY month"
         );
         $expenseStmt->execute([$ownerId, $start]);
         $expenseByMonth = $expenseStmt->fetchAll(PDO::FETCH_ASSOC);
